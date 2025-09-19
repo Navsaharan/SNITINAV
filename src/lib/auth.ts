@@ -9,6 +9,10 @@ import { User } from "@prisma/client"
 // https://next-auth.js.org/configuration/providers/credentials
 
 export const authOptions = {
+  // Use secure cookies in production
+  useSecureCookies: process.env.NODE_ENV === 'production',
+  // Trust the host header in production (behind Vercel proxy)
+  trustHost: process.env.NODE_ENV === 'production',
   // Session configuration
   session: {
     strategy: "jwt" as const,

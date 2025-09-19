@@ -6,28 +6,30 @@ const globalForPrisma = globalThis as unknown as {
 
 // Create Prisma client with error handling for build time and serverless optimization
 function createPrismaClient() {
-  // Check if we're in a build context
-  const isBuildTime = (
-    (process.env.VERCEL === '1' && !process.env.VERCEL_URL) ||
-    process.env.NEXT_PHASE === 'phase-production-build' ||
-    (process.env.NODE_ENV === 'production' && !global.fetch) ||
-    !process.env.DATABASE_URL
-  )
+  // Skip in build context
+  if (process.env.NODE_ENV === 'production' && !process.env.VERCEL) {
+    console.warn('Skipping Prisma Client creation in non-Vercel production')
+    return null as any
+  }
 
-  if (isBuildTime) {
-    console.warn('Skipping Prisma Client creation during build time')
+  if (!process.env.DATABASE_URL) {
+    console.warn('DATABASE_URL is not set')
     return null as any
   }
 
   try {
+    // Add SSL configuration to the database URL if it's a Supabase connection
+    const databaseUrl = process.env.DATABASE_URL.includes('supabase')
+      ? `${process.env.DATABASE_URL}?sslmode=require&pgbouncer=true&connection_limit=5`
+      : process.env.DATABASE_URL
+
     return new PrismaClient({
       log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-      errorFormat: 'pretty',
       datasources: {
         db: {
-          url: process.env.DATABASE_URL,
-        },
-      },
+          url: databaseUrl
+        }
+      }
     })
   } catch (error) {
     console.error('Failed to create Prisma Client:', error)
