@@ -17,8 +17,8 @@ const nextConfig: NextConfig = {
         'snitinew.vercel.app' // Keep for backward compatibility during transition
       ]
     },
-    // Optimize CSS
-    optimizeCss: true
+    // Disable CSS optimization to prevent critters error
+    optimizeCss: false
   },
   
   // Bundle external packages
