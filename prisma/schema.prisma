@@ -1,0 +1,244 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User management for admin panel
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  role      UserRole @default(EDITOR)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  createdPages    Page[]
+  createdMedia    Media[]
+  createdContents Content[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+// Page management
+model Page {
+  id          String      @id @default(cuid())
+  title       String
+  slug        String      @unique
+  description String?
+  content     String?
+  metaTitle   String?
+  metaDesc    String?
+  status      PageStatus  @default(DRAFT)
+  parentId    String?
+  order       Int         @default(0)
+  navigationCategory String? // Navigation dropdown assignment (e.g., "About Us", "Admissions", etc.)
+  navigationOrder Int @default(0) // Order within navigation category
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  createdById String
+
+  // Relations
+  createdBy User    @relation(fields: [createdById], references: [id])
+  parent    Page?   @relation("PageHierarchy", fields: [parentId], references: [id])
+  children  Page[]  @relation("PageHierarchy")
+  contents  Content[]
+
+  @@map("pages")
+}
+
+enum PageStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+// Content blocks for flexible page content
+model Content {
+  id      String      @id @default(cuid())
+  type    ContentType
+  title   String?
+  content String?
+  data    String? // JSON data for complex content
+  order   Int         @default(0)
+  pageId  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  createdById String
+
+  // Relations
+  page      Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  createdBy User @relation(fields: [createdById], references: [id])
+
+  @@map("contents")
+}
+
+enum ContentType {
+  TEXT
+  HTML
+  IMAGE
+  GALLERY
+  SLIDESHOW
+  TABLE
+  LIST
+  CONTACT_INFO
+  DOWNLOAD
+  FEEDBACK_FORM
+}
+
+// Media management
+model Media {
+  id          String       @id @default(cuid())
+  filename    String
+  originalName String
+  mimeType    String
+  size        Int
+  url         String
+  alt         String?
+  caption     String?
+  category    MediaCategory @default(GENERAL)
+  tags        String?      // Comma-separated tags
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  createdById String
+
+  // Relations
+  createdBy User @relation(fields: [createdById], references: [id])
+
+  @@map("media")
+}
+
+enum MediaCategory {
+  GENERAL
+  FACULTY
+  INFRASTRUCTURE
+  EVENTS
+  GALLERY
+  DOCUMENTS
+  CERTIFICATES
+  ACHIEVEMENTS
+}
+
+// Contact messages
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  contact   String?
+  subject   String?
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("contact_messages")
+}
+
+// Faculty management
+model Faculty {
+  id          String   @id @default(cuid())
+  name        String
+  designation String
+  department  String?
+  email       String?
+  phone       String?
+  photoUrl    String?
+  bio         String?
+  order       Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("faculty")
+}
+
+// Site settings and configuration
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+  type  SettingType @default(STRING)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("settings")
+}
+
+enum SettingType {
+  STRING
+  NUMBER
+  BOOLEAN
+  JSON
+  COLOR
+}
+
+// Navigation menu management
+model MenuItem {
+  id       String  @id @default(cuid())
+  title    String
+  url      String?
+  pageId   String?
+  parentId String?
+  order    Int     @default(0)
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  parent   MenuItem?   @relation("MenuHierarchy", fields: [parentId], references: [id])
+  children MenuItem[]  @relation("MenuHierarchy")
+
+  @@map("menu_items")
+}
+
+// Enhanced Navigation management with full hierarchy support
+model NavigationItem {
+  id          String  @id @default(cuid())
+  title       String
+  href        String?
+  parentId    String?
+  order       Int     @default(0)
+  isVisible   Boolean @default(true)
+  linkType    String  @default("internal") // internal, external, dropdown
+  target      String  @default("_self") // _self, _blank
+  description String?
+  icon        String?
+  cssClass    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  parent   NavigationItem?   @relation("NavigationHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children NavigationItem[]  @relation("NavigationHierarchy")
+
+  @@index([parentId])
+  @@index([order])
+  @@index([isVisible])
+  @@map("navigation_items")
+}
+
+// Analytics and tracking
+model PageView {
+  id        String   @id @default(cuid())
+  pageSlug  String
+  userAgent String?
+  ipAddress String?
+  referer   String?
+  createdAt DateTime @default(now())
+
+  @@map("page_views")
+}
