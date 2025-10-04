@@ -1,69 +1,62 @@
-// Supabase temporarily disabled - using local file storage instead
-// import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js'
 
-// Supabase clients disabled for local development
-export const supabase = null
-export const supabaseAdmin = null
+// Supabase configuration
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-// Local file storage helpers (replacing Supabase)
-import fs from 'fs/promises'
-import path from 'path'
-
-const UPLOAD_DIR = process.env.UPLOAD_DIR || './uploads'
-
-// Ensure upload directory exists
-async function ensureUploadDir() {
-  try {
-    await fs.access(UPLOAD_DIR)
-  } catch {
-    await fs.mkdir(UPLOAD_DIR, { recursive: true })
+// Create Supabase clients
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
   }
-}
+})
 
+// File upload helpers for Supabase Storage
 export const uploadFile = async (bucket: string, filePath: string, file: File) => {
-  await ensureUploadDir()
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .upload(filePath, file)
 
-  const bucketDir = path.join(UPLOAD_DIR, bucket)
-  await fs.mkdir(bucketDir, { recursive: true })
-
-  const fullPath = path.join(bucketDir, filePath)
-  const buffer = Buffer.from(await file.arrayBuffer())
-
-  await fs.writeFile(fullPath, buffer)
+  if (error) throw error
 
   return {
     path: filePath,
-    fullPath: fullPath
+    fullPath: data.path
   }
 }
 
 export const uploadBuffer = async (bucket: string, filePath: string, buffer: ArrayBuffer, contentType: string) => {
-  await ensureUploadDir()
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .upload(filePath, buffer, {
+      contentType,
+      upsert: true
+    })
 
-  const bucketDir = path.join(UPLOAD_DIR, bucket)
-  await fs.mkdir(bucketDir, { recursive: true })
-
-  const fullPath = path.join(bucketDir, filePath)
-  const nodeBuffer = Buffer.from(buffer)
-
-  await fs.writeFile(fullPath, nodeBuffer)
+  if (error) throw error
 
   return {
     path: filePath,
-    fullPath: fullPath,
+    fullPath: data.path,
     contentType
   }
 }
 
 export const getFileUrl = (bucket: string, filePath: string) => {
-  // Return local file URL for development
-  return `/api/files/${bucket}/${filePath}`
+  const { data } = supabase.storage
+    .from(bucket)
+    .getPublicUrl(filePath)
+  
+  return data.publicUrl
 }
 
 export const getSignedUrl = async (bucket: string, filePath: string, expiresIn: number = 3600) => {
-  // For local development, return the same URL (no signing needed)
-  return `/api/files/${bucket}/${filePath}`
-    .createSignedUrl(path, expiresIn)
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .createSignedUrl(filePath, expiresIn)
   
   if (error) throw error
   return data.signedUrl
