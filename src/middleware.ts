@@ -52,8 +52,7 @@ export default withAuth(
             return true
           }
           // For other admin routes, require authentication and admin role
-          console.log("Middleware auth check - token:", !!token, "role:", token?.role, "userType:", token?.userType)
-          return !!token && (token.role === 'ADMIN' || token.userType === 'ADMIN')
+          return !!token && token.role === 'ADMIN'
         }
 
         // Check if user is trying to access student routes
@@ -63,8 +62,7 @@ export default withAuth(
             return true
           }
           // For other student routes, require authentication and student role
-          console.log("Middleware student auth check - token:", !!token, "role:", token?.role, "userType:", token?.userType)
-          return !!token && (token.userType === 'STUDENT' || ['STUDENT', 'FACULTY', 'STAFF'].includes(token.role))
+          return !!token && ['STUDENT', 'FACULTY', 'STAFF'].includes(token.role)
         }
 
         // Allow access to all other routes

@@ -74,8 +74,7 @@ export const authOptions = {
             id: user.id,
             email: user.email,
             name: user.name,
-            role: user.role,
-            userType: 'ADMIN'
+            role: user.role
           }
         } catch (error) {
           console.error("Authentication error:", error)
@@ -91,7 +90,6 @@ export const authOptions = {
       if (user) {
         token.role = user.role
         token.id = user.id
-        token.userType = user.userType
       }
       return token
     },
@@ -99,7 +97,6 @@ export const authOptions = {
       if (token) {
         session.user.id = token.id || token.sub!
         session.user.role = token.role as string
-        session.user.userType = token.userType as string
       }
       return session
     },
