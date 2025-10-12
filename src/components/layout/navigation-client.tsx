@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
 import Header from './header'
 
 interface MenuItem {
@@ -18,6 +19,7 @@ const fallbackNavigation: MenuItem[] = [
 ]
 
 export default function NavigationClient() {
+  const { data: session } = useSession()
   const [navigation, setNavigation] = useState<MenuItem[]>(fallbackNavigation)
   const [loading, setLoading] = useState(true)
 
@@ -45,7 +47,7 @@ export default function NavigationClient() {
     }
 
     fetchNavigation()
-  }, [])
+  }, [session])
 
   if (loading) {
     return <div className="h-16 bg-white border-b animate-pulse" />
