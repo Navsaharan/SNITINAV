@@ -36,7 +36,7 @@ const nextConfig: NextConfig = {
     '@radix-ui/react-avatar',
     'serverExternalPackages: ["@prisma/client", "prisma"],
 
-'outputFileTracingIncludes: {
+outputFileTracingIncludes: {
   "/api/**/*": ["./node_modules/.prisma/client/**/*"],
   "/*": ["./node_modules/.prisma/client/**/*"] 
 },
