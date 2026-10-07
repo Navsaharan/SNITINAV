@@ -12,42 +12,37 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   generateEtags: true,
   
-  experimental: {
-    // Server Actions configuration
+   experimental: {
     serverActions: {
-      bodySizeLimit: '2mb',
+      bodySizeLimit: "2mb",
       allowedOrigins: [
-        'localhost:3000', 
-        'localhost:3001', 
-        'snitinav.vercel.app',
-        'snitinew.vercel.app' // Keep for backward compatibility during transition
+        "localhost:3000",
+        "localhost:3001",
+        "snitinav.vercel.app",
+        "snitinew.vercel.app"
       ]
     },
-    // Disable CSS optimization to prevent critters error
     optimizeCss: false
   },
-  
-  // Bundle external packages
-  transpilePackages: [
-    'lucide-react',
-    '@radix-ui/react-dialog',
-    '@radix-ui/react-dropdown-menu',
-    '@radix-ui/react-slot',
-    '@radix-ui/react-avatar',
-    serverExternalPackages: ["@prisma/client", "prisma"],
 
-outputFileTracingIncludes: {
-  "/api/**/*": ["./node_modules/.prisma/client/**/*"],
-  "/*": ["./node_modules/.prisma/client/**/*"] 
-},
-    'bcryptjs',
-    '@t3-oss/env-nextjs'
+  transpilePackages: [
+    "lucide-react",
+    "@radix-ui/react-dialog",
+    "@radix-ui/react-dropdown-menu",
+    "@radix-ui/react-slot",
+    "@radix-ui/react-avatar",
+    "bcryptjs",
+    "@t3-oss/env-nextjs"
   ],
 
-  // TypeScript configuration
-  typescript: {
-    ignoreBuildErrors: true,
+  serverExternalPackages: ["@prisma/client", "prisma"],
+
+  outputFileTracingIncludes: {
+    "/api/**/*": ["./node_modules/.prisma/client/**/*"],
+    "/*": ["./node_modules/.prisma/client/**/*"]
   },
+
+  generateEtags: true, 
 
   // ESLint configuration
   eslint: {
