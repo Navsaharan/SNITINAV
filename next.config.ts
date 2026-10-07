@@ -34,7 +34,12 @@ const nextConfig: NextConfig = {
     '@radix-ui/react-dropdown-menu',
     '@radix-ui/react-slot',
     '@radix-ui/react-avatar',
-    '@prisma/client',
+    'serverExternalPackages: ["@prisma/client", "prisma"],
+
+'outputFileTracingIncludes: {
+  "/api/**/*": ["./node_modules/.prisma/client/**/*"],
+  "/*": ["./node_modules/.prisma/client/**/*"] 
+},
     'bcryptjs',
     '@t3-oss/env-nextjs'
   ],
