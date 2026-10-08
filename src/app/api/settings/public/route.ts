@@ -9,13 +9,13 @@ export async function GET() {
     })
 
     // Convert to key-value object for easier use
-    const settingsObject = settings.reduce((acc, setting) => {
+    const settingsObject = settings.reduce((acc: Record<string, { value: string; type: string }>, setting: { key: string; value: string; type: string }) => {
       acc[setting.key] = {
         value: setting.value,
         type: setting.type
       }
       return acc
-    }, {} as Record<string, { value: string; type: string }>)
+    }, {})
 
     return NextResponse.json(settingsObject)
   } catch (error) {

@@ -33,38 +33,6 @@ export interface SystemMetrics {
   }
 }
 
-export interface EmailMetrics {
-  timestamp: Date
-  smtp: {
-    totalConnections: number
-    activeConnections: number
-    emailsSent: number
-    emailsFailed: number
-    averageResponseTime: number
-    throughput: number
-  }
-  imap: {
-    totalConnections: number
-    activeConnections: number
-    commandsProcessed: number
-    commandsFailed: number
-    averageResponseTime: number
-  }
-  pop3: {
-    totalConnections: number
-    activeConnections: number
-    commandsProcessed: number
-    commandsFailed: number
-    averageResponseTime: number
-  }
-  storage: {
-    totalEmails: number
-    totalSize: number
-    attachmentSize: number
-    indexSize: number
-  }
-}
-
 export interface SecurityMetrics {
   timestamp: Date
   threats: {
@@ -83,30 +51,17 @@ export interface SecurityMetrics {
     violations: number
     dataExports: number
     auditEvents: number
-    encryptedEmails: number
   }
 }
 
 export interface PerformanceAnalytics {
   timeRange: { start: Date; end: Date }
-  emailVolume: Array<{
-    timestamp: Date
-    sent: number
-    received: number
-    failed: number
-  }>
   responseTime: Array<{
     timestamp: Date
-    smtp: number
-    imap: number
-    pop3: number
     web: number
   }>
   errorRates: Array<{
     timestamp: Date
-    smtp: number
-    imap: number
-    pop3: number
     web: number
   }>
   resourceUsage: Array<{
@@ -128,7 +83,7 @@ export interface AlertRule {
   duration: number // minutes
   severity: 'low' | 'medium' | 'high' | 'critical'
   actions: Array<{
-    type: 'email' | 'webhook' | 'log'
+    type: 'webhook' | 'log'
     target: string
     template?: string
   }>
@@ -144,7 +99,7 @@ export interface MonitoringReport {
   enabled: boolean
   recipients: string[]
   sections: Array<{
-    type: 'system' | 'email' | 'security' | 'performance'
+    type: 'system' | 'security' | 'performance'
     metrics: string[]
     charts: string[]
   }>
@@ -169,7 +124,7 @@ export class MonitoringService {
         threshold: 80,
         duration: 5,
         severity: 'high',
-        actions: [{ type: 'email', target: 'admin@institute.edu' }],
+        actions: [{ type: 'log', target: 'admin' }],
         triggerCount: 0
       },
       {
@@ -181,7 +136,7 @@ export class MonitoringService {
         threshold: 85,
         duration: 3,
         severity: 'high',
-        actions: [{ type: 'email', target: 'admin@institute.edu' }],
+        actions: [{ type: 'log', target: 'admin' }],
         triggerCount: 0
       },
       {
@@ -193,7 +148,7 @@ export class MonitoringService {
         threshold: 90,
         duration: 1,
         severity: 'critical',
-        actions: [{ type: 'email', target: 'admin@institute.edu' }],
+        actions: [{ type: 'log', target: 'admin' }],
         triggerCount: 0
       }
     ]
@@ -248,44 +203,6 @@ export class MonitoringService {
     return metrics
   }
 
-  // Collect email system metrics
-  async collectEmailMetrics(): Promise<EmailMetrics> {
-    const metrics: EmailMetrics = {
-      timestamp: new Date(),
-      smtp: {
-        totalConnections: 1250 + Math.floor(Math.random() * 100),
-        activeConnections: 5 + Math.floor(Math.random() * 15),
-        emailsSent: 980 + Math.floor(Math.random() * 200),
-        emailsFailed: Math.floor(Math.random() * 10),
-        averageResponseTime: 120 + Math.random() * 80,
-        throughput: 45 + Math.random() * 20
-      },
-      imap: {
-        totalConnections: 890 + Math.floor(Math.random() * 100),
-        activeConnections: 12 + Math.floor(Math.random() * 20),
-        commandsProcessed: 5600 + Math.floor(Math.random() * 1000),
-        commandsFailed: Math.floor(Math.random() * 20),
-        averageResponseTime: 85 + Math.random() * 40
-      },
-      pop3: {
-        totalConnections: 340 + Math.floor(Math.random() * 50),
-        activeConnections: 3 + Math.floor(Math.random() * 8),
-        commandsProcessed: 1200 + Math.floor(Math.random() * 300),
-        commandsFailed: Math.floor(Math.random() * 5),
-        averageResponseTime: 95 + Math.random() * 30
-      },
-      storage: {
-        totalEmails: 125000 + Math.floor(Math.random() * 5000),
-        totalSize: 15.6 * 1024 * 1024 * 1024 + Math.random() * 1024 * 1024 * 1024,
-        attachmentSize: 8.2 * 1024 * 1024 * 1024 + Math.random() * 512 * 1024 * 1024,
-        indexSize: 256 * 1024 * 1024 + Math.random() * 64 * 1024 * 1024
-      }
-    }
-
-    this.storeMetrics('email', metrics)
-    return metrics
-  }
-
   // Collect security metrics
   async collectSecurityMetrics(): Promise<SecurityMetrics> {
     const metrics: SecurityMetrics = {
@@ -305,8 +222,7 @@ export class MonitoringService {
       compliance: {
         violations: 12 + Math.floor(Math.random() * 5),
         dataExports: 8 + Math.floor(Math.random() * 3),
-        auditEvents: 450 + Math.floor(Math.random() * 50),
-        encryptedEmails: 234 + Math.floor(Math.random() * 30)
+        auditEvents: 450 + Math.floor(Math.random() * 50)
       }
     }
 
@@ -340,24 +256,12 @@ export class MonitoringService {
 
     return {
       timeRange: { start: startDate, end: endDate },
-      emailVolume: dataPoints.map(point => ({
-        timestamp: point.timestamp,
-        sent: 50 + Math.floor(Math.random() * 100),
-        received: 40 + Math.floor(Math.random() * 80),
-        failed: Math.floor(Math.random() * 5)
-      })),
       responseTime: dataPoints.map(point => ({
         timestamp: point.timestamp,
-        smtp: 120 + Math.random() * 80,
-        imap: 85 + Math.random() * 40,
-        pop3: 95 + Math.random() * 30,
         web: 200 + Math.random() * 100
       })),
       errorRates: dataPoints.map(point => ({
         timestamp: point.timestamp,
-        smtp: Math.random() * 2,
-        imap: Math.random() * 1.5,
-        pop3: Math.random() * 1,
         web: Math.random() * 3
       })),
       resourceUsage: dataPoints.map(point => ({
@@ -390,7 +294,7 @@ export class MonitoringService {
   }
 
   // Check alert rules against current metrics
-  async checkAlertRules(metrics: SystemMetrics | EmailMetrics | SecurityMetrics): Promise<{
+  async checkAlertRules(metrics: SystemMetrics | SecurityMetrics): Promise<{
     triggeredAlerts: Array<{
       rule: AlertRule
       currentValue: number
@@ -469,9 +373,6 @@ export class MonitoringService {
         case 'system':
           data.system = await this.collectSystemMetrics()
           break
-        case 'email':
-          data.email = await this.collectEmailMetrics()
-          break
         case 'security':
           data.security = await this.collectSecurityMetrics()
           break
@@ -505,14 +406,6 @@ export class MonitoringService {
       report += `- Memory Usage: ${data.system.memory.usagePercentage.toFixed(1)}%\n`
       report += `- Disk Usage: ${data.system.disk.usagePercentage.toFixed(1)}%\n`
       report += `- Active Processes: ${data.system.processes.running}\n\n`
-    }
-
-    if (data.email) {
-      report += `## Email System\n`
-      report += `- SMTP Connections: ${data.email.smtp.activeConnections}\n`
-      report += `- Emails Sent: ${data.email.smtp.emailsSent}\n`
-      report += `- IMAP Connections: ${data.email.imap.activeConnections}\n`
-      report += `- POP3 Connections: ${data.email.pop3.activeConnections}\n\n`
     }
 
     if (data.security) {

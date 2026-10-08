@@ -10,7 +10,7 @@ const UPLOAD_DIR = process.env.UPLOAD_DIR || './uploads'
 // GET /api/files/[bucket]/[...path] - Serve local files
 export async function GET(
   request: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
   try {
     // Basic authentication check for file access
@@ -19,7 +19,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const [bucket, ...filePath] = params.path
+    const [bucket, ...filePath] = (await params).path
     const fileName = filePath.join('/')
     
     if (!bucket || !fileName) {
@@ -72,7 +72,7 @@ export async function GET(
       }
 
       // Return the file with appropriate headers
-      return new NextResponse(fileBuffer, {
+      return new NextResponse(new Uint8Array(fileBuffer), {
         status: 200,
         headers: {
           'Content-Type': contentType,
@@ -95,7 +95,7 @@ export async function GET(
 // POST /api/files/[bucket] - Upload files to local storage
 export async function POST(
   request: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -103,7 +103,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const [bucket] = params.path
+    const [bucket] = (await params).path
     
     if (!bucket) {
       return NextResponse.json({ error: 'Bucket name required' }, { status: 400 })

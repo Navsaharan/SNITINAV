@@ -72,6 +72,7 @@ export const studentAuthOptions: NextAuthOptions = {
             id: emailAccount.id,
             email: emailAccount.email,
             name: emailAccount.displayName || `${emailAccount.firstName} ${emailAccount.lastName}`,
+            role: emailAccount.type,
             type: emailAccount.type,
             studentId: emailAccount.studentId,
             department: emailAccount.department,
@@ -92,6 +93,7 @@ export const studentAuthOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        token.userType = user.type
         token.type = user.type
         token.studentId = user.studentId
         token.department = user.department
@@ -102,7 +104,7 @@ export const studentAuthOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (token) {
-        session.user.id = token.id || token.sub!
+        session.user.id = token.sub!
         session.user.type = token.type as string
         session.user.studentId = token.studentId as string
         session.user.department = token.department as string

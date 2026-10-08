@@ -52,7 +52,7 @@ export const PreserveAttributes = Extension.create({
           'data-*': {
             default: null,
             parseHTML: element => {
-              const dataAttrs = {}
+              const dataAttrs: Record<string, string> = {}
               Array.from(element.attributes).forEach(attr => {
                 if (attr.name.startsWith('data-')) {
                   dataAttrs[attr.name] = attr.value
@@ -271,7 +271,7 @@ export const PreserveUnknownElements = Extension.create({
             default: null,
             parseHTML: element => {
               // Store additional attributes as JSON (excluding standard ones)
-              const attrs = {}
+              const attrs: Record<string, string> = {}
               const standardAttrs = ['class', 'style', 'id']
               Array.from(element.attributes).forEach(attr => {
                 if (!standardAttrs.includes(attr.name) && attr.name.startsWith('data-')) {
@@ -311,7 +311,7 @@ export const TextFormatPreservation = Extension.create({
             default: null,
             parseHTML: element => {
               // Preserve formatting-specific attributes
-              const formatAttrs = {}
+              const formatAttrs: Record<string, string> = {}
               const formatAttributes = ['color', 'background-color', 'font-family', 'font-size', 'font-weight']
 
               formatAttributes.forEach(attr => {

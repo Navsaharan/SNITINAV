@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { createSecureApi, validators } from '@/lib/secure-api'
@@ -37,44 +37,10 @@ export const GET = createSecureApi(
       return NextResponse.json({ navigation: navigationItems })
     } catch (error) {
       console.error('Navigation API Error:', error)
-      // Return default navigation structure as fallback
-      const defaultNavigation = [
-        {
-          id: 'nav-home',
-          title: 'Home',
-          href: '/',
-          parentId: null,
-          order: 0,
-          isVisible: true,
-          linkType: 'internal',
-          target: '_self',
-          children: []
-        },
-        {
-          id: 'nav-about',
-          title: 'About Us',
-          href: null,
-          parentId: null,
-          order: 1,
-          isVisible: true,
-          linkType: 'dropdown',
-          target: '_self',
-          children: [
-            {
-              id: 'nav-about-institute',
-              title: 'About Institute',
-              href: '/about-institute',
-              parentId: 'nav-about',
-              order: 0,
-              isVisible: true,
-              linkType: 'internal',
-              target: '_self',
-              children: []
-            }
-          ]
-        }
-      ]
-      return NextResponse.json({ navigation: defaultNavigation })
+      return NextResponse.json({ error: 'Navigation data is temporarily unavailable' }, {
+        status: 503,
+        headers: { 'Cache-Control': 'no-store' }
+      })
     }
   },
   { requireAuth: true, requireRole: 'EDITOR' }

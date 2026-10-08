@@ -1,7 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
-import NextAuth from 'next-auth'
+import NextAuth from 'next-auth/next'
 import { studentAuthOptions } from '@/lib/student-auth'
 
-const handler = NextAuth(studentAuthOptions)
+const handler = NextAuth(studentAuthOptions) as any
 
 export { handler as GET, handler as POST }

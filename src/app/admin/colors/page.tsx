@@ -112,6 +112,7 @@ export default function ColorManagement() {
       if (response.ok) {
         const settings = await response.json()
         const colorSettings: ColorSettings = {
+          ...defaultColors,
           primary_color: settings.primary_color?.value || defaultColors.primary_color,
           secondary_color: settings.secondary_color?.value || defaultColors.secondary_color,
           accent_color: settings.accent_color?.value || defaultColors.accent_color,
@@ -192,10 +193,11 @@ export default function ColorManagement() {
     }
   }
 
-  const applyPreset = (presetColors: ColorSettings) => {
-    setColors(presetColors)
+  const applyPreset = (presetColors: Partial<ColorSettings>) => {
+    const completeColors = { ...defaultColors, ...presetColors }
+    setColors(completeColors)
     if (previewMode) {
-      applyColorsToDOM(presetColors)
+      applyColorsToDOM(completeColors)
     }
   }
 

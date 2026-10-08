@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
@@ -17,8 +17,17 @@ export async function GET(request: NextRequest) {
     })
 
     // Transform to include additional metadata
-    const gateways = gatewayConfigs.map(config => {
-      let parsedConfig = {}
+    const gateways = gatewayConfigs.map((config: {
+      id: string
+      gateway: string
+      config: string
+      isEnabled: boolean
+      isTestMode: boolean
+      feeAmount: number
+      feeType: string
+      updatedAt: Date | null
+    }) => {
+      let parsedConfig: { apiKey?: string; secretKey?: string; webhookUrl?: string } = {}
       try {
         parsedConfig = JSON.parse(config.config)
       } catch (e) {

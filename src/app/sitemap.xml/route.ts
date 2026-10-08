@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server'
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   try {
@@ -25,7 +23,7 @@ export async function GET() {
     ]
 
     // Dynamic pages from database
-    const dynamicPages = pages.map(page => ({
+    const dynamicPages = pages.map((page: { slug: string; updatedAt: Date }) => ({
       url: `/${page.slug}`,
       lastmod: page.updatedAt.toISOString(),
       priority: page.slug === 'home' ? '1.0' : '0.7'

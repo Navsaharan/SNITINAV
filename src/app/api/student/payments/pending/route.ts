@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { studentAuthOptions } from '@/lib/student-auth'
 import { prisma } from '@/lib/prisma'
 import { buildSafeApiRoute } from '@/lib/build-safe-api'
@@ -7,7 +7,7 @@ import { buildSafeApiRoute } from '@/lib/build-safe-api'
 // GET /api/student/payments/pending - Get pending payments for student
 export const GET = buildSafeApiRoute(async (request: NextRequest) => {
   // Check authentication
-  const session = await getServerSession(studentAuthOptions)
+  const session = await getServerSession(studentAuthOptions) as { user?: { email?: string } } | null
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -54,12 +54,12 @@ export const GET = buildSafeApiRoute(async (request: NextRequest) => {
 
     const paidCatalogItemIds = new Set(
       existingPayments
-        .map(p => p.catalogItemId)
+        .map((p: { catalogItemId: string | null }) => p.catalogItemId)
         .filter(Boolean)
     )
 
     // Filter out already paid items (unless recurring)
-    const pendingItems = catalogItems.filter(item => {
+    const pendingItems = catalogItems.filter((item: { id: string; isRecurring: boolean }) => {
       if (item.isRecurring) {
         // For recurring items, check if payment is due based on interval
         return true // Simplified - in real implementation, check last payment date
@@ -68,7 +68,18 @@ export const GET = buildSafeApiRoute(async (request: NextRequest) => {
     })
 
     // Transform to include status and calculate late fees
-    const paymentsWithStatus = pendingItems.map(item => {
+    const paymentsWithStatus = pendingItems.map((item: {
+      id: string
+      name: string
+      description: string | null
+      feeType: string
+      amount: number
+      currency: string
+      dueDate: Date | null
+      lateFee: number
+      discountPercentage: number
+      isRecurring: boolean
+    }) => {
       const now = new Date()
       const dueDate = item.dueDate ? new Date(item.dueDate) : null
       const isOverdue = dueDate && now > dueDate

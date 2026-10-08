@@ -181,7 +181,8 @@ export async function parseRequestBody<T = any>(request: NextRequest): Promise<T
     }
     return JSON.parse(text)
   } catch (error) {
-    throw new Error(`Invalid JSON in request body: ${error.message}`)
+    const detail = error instanceof Error ? error.message : String(error)
+    throw new Error(`Invalid JSON in request body: ${detail}`)
   }
 }
 

@@ -60,7 +60,6 @@ import {
   Upload,
   X,
   Code,
-  Palette,
   History,
   Save
 } from 'lucide-react'

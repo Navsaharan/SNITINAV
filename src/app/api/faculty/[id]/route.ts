@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
+type RouteContext = { params: Promise<{ id: string }> }
+
 const facultyUpdateSchema = z.object({
   name: z.string().min(1, 'Name is required').optional(),
   designation: z.string().min(1, 'Designation is required').optional(),
@@ -19,10 +21,10 @@ const facultyUpdateSchema = z.object({
 // GET /api/faculty/[id] - Get single faculty member
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: RouteContext
 ) {
   try {
-    const { id } = params
+    const { id } = await params
 
     const faculty = await prisma.faculty.findUnique({
       where: { id }
@@ -42,7 +44,7 @@ export async function GET(
 // PUT /api/faculty/[id] - Update faculty member (admin only)
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: RouteContext
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -50,7 +52,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = params
+    const { id } = await params
     const body = await request.json()
     const validatedData = facultyUpdateSchema.parse(body)
 
@@ -82,7 +84,7 @@ export async function PUT(
 // DELETE /api/faculty/[id] - Delete faculty member (admin only)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: RouteContext
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -90,7 +92,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { id } = params
+    const { id } = await params
 
     await prisma.faculty.delete({
       where: { id }

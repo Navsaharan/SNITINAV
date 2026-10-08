@@ -3,59 +3,67 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
+type SlideshowMediaRow = {
+  id: string
+  url: string
+  alt: string | null
+  originalName: string | null
+  caption: string | null
+}
+
 // GET /api/slideshow - Get slideshow images
 export async function GET(request: NextRequest) {
   try {
-    let slideshowImages = []
-    
-    try {
-      // Try to get slideshow configuration from settings
-      const slideshowSetting = await prisma.setting.findUnique({
-        where: {
-          key: 'homepage_slideshow'
+    const slideshowSetting = await prisma.setting.findUnique({
+      where: { key: 'homepage_slideshow' }
+    })
+    let imageIds: string[] = []
+    if (slideshowSetting?.value) {
+      try {
+        const parsed: unknown = JSON.parse(slideshowSetting.value)
+        if (Array.isArray(parsed)) {
+          imageIds = parsed.filter((id): id is string => typeof id === 'string')
         }
-      })
-
-      if (slideshowSetting?.value) {
-        try {
-          const imageIds = JSON.parse(slideshowSetting.value)
-          
-          if (Array.isArray(imageIds) && imageIds.length > 0) {
-            // Get the actual media files
-            const mediaFiles = await prisma.media.findMany({
-              where: {
-                id: {
-                  in: imageIds
-                }
-              },
-              orderBy: {
-                createdAt: 'desc'
-              }
-            })
-
-            // Define the Media type
-            interface Media {
-              id: string
-              url: string
-              alt?: string
-              originalName?: string
-              caption?: string
-            }
-
-            slideshowImages = mediaFiles.map((media: Media) => ({
-              id: media.id,
-              url: media.url,
-              alt: media.alt || media.originalName || 'Slideshow image',
-              caption: media.caption
-            }))
-          }
-        } catch (error) {
-          console.error('Error parsing slideshow setting:', error)
-        }
+      } catch (error) {
+        console.error('Error parsing slideshow setting:', error)
       }
-    } catch (error) {
-      console.error('Error accessing settings table:', error)
-      // Continue to return default images
+    }
+
+    let slideshowImages: Array<{ id: string; url: string; alt: string; caption: string | null }> = []
+    if (imageIds.length > 0) {
+      const mediaFiles = await prisma.media.findMany({
+        where: { id: { in: imageIds } },
+        select: { id: true, url: true, alt: true, originalName: true, caption: true }
+      })
+      const mediaById = new Map<string, SlideshowMediaRow>(
+        mediaFiles.map((media: SlideshowMediaRow) => [media.id, media] as [string, SlideshowMediaRow])
+      )
+      slideshowImages = imageIds.flatMap(id => {
+        const media = mediaById.get(id)
+        return media ? [{
+          id: media.id,
+          url: media.url,
+          alt: media.alt || media.originalName || 'Slideshow image',
+          caption: media.caption
+        }] : []
+      })
+    }
+
+    // A migrated database may have media but no slideshow setting. Prefer its
+    // real image records over the legacy hard-coded sample images in that case.
+    if (slideshowImages.length === 0) {
+      const mediaFiles = await prisma.media.findMany({
+        where: { mimeType: { startsWith: 'image/' } },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+        take: 10,
+        select: { id: true, url: true, alt: true, originalName: true, caption: true }
+      })
+      slideshowImages = mediaFiles.map((media: SlideshowMediaRow) => ({
+        id: media.id,
+        url: media.url,
+        alt: media.alt || media.originalName || 'Slideshow image',
+        caption: media.caption
+      }))
     }
 
     // If no slideshow images configured, return default images
@@ -86,7 +94,12 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    return NextResponse.json({ images: slideshowImages })
+    const dataSource = slideshowImages.some(image => !image.id.startsWith('default-'))
+      ? 'prisma'
+      : 'fallback'
+    return NextResponse.json({ images: slideshowImages }, {
+      headers: { 'X-Data-Source': dataSource }
+    })
   } catch (error) {
     console.error('Error fetching slideshow:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

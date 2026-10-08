@@ -26,7 +26,7 @@ export async function GET() {
     })
 
     // Convert to key-value object for easier use
-    const settingsObject = settings.reduce((acc, setting) => {
+    const settingsObject = settings.reduce((acc: Record<string, { value: string; type: string }>, setting: { key: string; value: string; type: string }) => {
       acc[setting.key] = {
         value: setting.value,
         type: setting.type
@@ -53,7 +53,7 @@ export async function PUT(request: NextRequest) {
     const validatedData = updateSettingsSchema.parse(body)
 
     // Update settings in transaction
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       for (const setting of validatedData.settings) {
         await tx.setting.upsert({
           where: { key: setting.key },
@@ -75,7 +75,7 @@ export async function PUT(request: NextRequest) {
       orderBy: { key: 'asc' }
     })
 
-    const settingsObject = updatedSettings.reduce((acc, setting) => {
+    const settingsObject = updatedSettings.reduce((acc: Record<string, { value: string; type: string }>, setting: { key: string; value: string; type: string }) => {
       acc[setting.key] = {
         value: setting.value,
         type: setting.type

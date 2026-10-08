@@ -75,7 +75,7 @@ export default function StudentLogin() {
             </div>
           </div>
           <h1 className="text-3xl font-bold text-gray-900">Student Portal</h1>
-          <p className="text-gray-600 mt-2">Sign in to access your email and services</p>
+          <p className="text-gray-600 mt-2">Sign in to access student services</p>
         </div>
 
         {/* Login Form */}
@@ -185,10 +185,6 @@ export default function StudentLogin() {
           <CardContent className="pt-6">
             <h3 className="font-semibold text-blue-900 mb-3">What you can do:</h3>
             <ul className="space-y-2 text-sm text-blue-800">
-              <li className="flex items-center gap-2">
-                <Mail className="w-4 h-4" />
-                Access your institutional email
-              </li>
               <li className="flex items-center gap-2">
                 <GraduationCap className="w-4 h-4" />
                 Pay fees and download receipts

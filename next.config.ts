@@ -1,12 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-    serverExternalPackages: ["@prisma/client", "prisma"],
-
-  outputFileTracingIncludes: {
-    "/api/**/*": ["./node_modules/.prisma/client/**/*"],
-    "/*": ["./node_modules/.prisma/client/**/*"]
-  },
   // Production optimizations
   compress: true,
   poweredByHeader: false,
@@ -41,8 +35,6 @@ const nextConfig: NextConfig = {
     "/api/**/*": ["./node_modules/.prisma/client/**/*"],
     "/*": ["./node_modules/.prisma/client/**/*"]
   },
-
-  generateEtags: true, 
 
   // ESLint configuration
   eslint: {

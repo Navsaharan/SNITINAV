@@ -20,10 +20,6 @@ interface SiteSettings {
   contact_email: string
   contact_phone: string
   contact_address: string
-  smtp_host: string
-  smtp_port: string
-  smtp_user: string
-  smtp_from: string
   meta_keywords: string
   meta_author: string
 }
@@ -36,10 +32,6 @@ export default function AdminSettings() {
     contact_email: '',
     contact_phone: '',
     contact_address: '',
-    smtp_host: '',
-    smtp_port: '',
-    smtp_user: '',
-    smtp_from: '',
     meta_keywords: '',
     meta_author: '',
   })
@@ -72,10 +64,6 @@ export default function AdminSettings() {
           contact_email: settingsData.contact_email?.value || 'snitcsrdr@gmail.com',
           contact_phone: settingsData.contact_phone?.value || '01564-275628',
           contact_address: settingsData.contact_address?.value || 'D-117, Kaka Colony, Gandhi Vidhya Mandir, Teh.-Sardar Shahar, Dist. Churu',
-          smtp_host: settingsData.smtp_host?.value || '',
-          smtp_port: settingsData.smtp_port?.value || '587',
-          smtp_user: settingsData.smtp_user?.value || '',
-          smtp_from: settingsData.smtp_from?.value || '',
           meta_keywords: settingsData.meta_keywords?.value || 'ITI, technical education, vocational training, Rajasthan',
           meta_author: settingsData.meta_author?.value || 'S.N. Pvt. Industrial Training Institute',
         }
@@ -151,7 +139,6 @@ export default function AdminSettings() {
   const tabs = [
     { id: 'general', name: 'General', icon: Globe },
     { id: 'contact', name: 'Contact', icon: Mail },
-    { id: 'email', name: 'Email', icon: Mail },
     { id: 'seo', name: 'SEO', icon: Settings },
   ]
 
@@ -282,74 +269,6 @@ export default function AdminSettings() {
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Your complete address"
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Email Settings */}
-          {activeTab === 'email' && (
-            <div className="bg-white shadow rounded-lg p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-6">Email Configuration</h3>
-              <div className="space-y-6">
-                <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
-                  <p className="text-sm text-blue-800">
-                    Configure SMTP settings to enable contact form email notifications. Leave blank to disable email functionality.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      SMTP Host
-                    </label>
-                    <input
-                      type="text"
-                      value={settings.smtp_host}
-                      onChange={(e) => handleInputChange('smtp_host', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="smtp.gmail.com"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      SMTP Port
-                    </label>
-                    <input
-                      type="text"
-                      value={settings.smtp_port}
-                      onChange={(e) => handleInputChange('smtp_port', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="587"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    SMTP Username
-                  </label>
-                  <input
-                    type="text"
-                    value={settings.smtp_user}
-                    onChange={(e) => handleInputChange('smtp_user', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="your-email@gmail.com"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    From Email Address
-                  </label>
-                  <input
-                    type="email"
-                    value={settings.smtp_from}
-                    onChange={(e) => handleInputChange('smtp_from', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="noreply@yoursite.com"
                   />
                 </div>
               </div>

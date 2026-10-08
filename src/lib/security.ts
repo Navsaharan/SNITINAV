@@ -42,7 +42,7 @@ export function getClientIP(request: NextRequest): string {
     return realIP
   }
   
-  return request.ip || 'unknown'
+  return 'unknown'
 }
 
 // Apply security headers
@@ -115,7 +115,7 @@ export function generateCSRFToken(): string {
 export function validateCSRFToken(token: string, sessionToken: string): boolean {
   // In a real implementation, you'd store CSRF tokens in session/database
   // For now, we'll use a simple validation
-  return token && token.length === 64 && /^[a-f0-9]+$/.test(token)
+  return typeof token === 'string' && token.length === 64 && /^[a-f0-9]+$/.test(token)
 }
 
 // Input sanitization

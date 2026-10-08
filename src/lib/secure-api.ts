@@ -20,6 +20,7 @@ import {
 export interface SecureApiOptions {
   requireAuth?: boolean
   requireAdmin?: boolean
+  requireRole?: string
   validateCSRF?: boolean
   logAudit?: boolean
   sanitizeInput?: boolean
@@ -29,6 +30,7 @@ export interface ApiContext {
   request: NextRequest
   user?: any
   clientIP: string
+  body?: any
 }
 
 export type SecureApiHandler = (
@@ -58,6 +60,13 @@ export function createSecureApi(
       if (options.requireAdmin) {
         const adminError = await requireAdmin(request)
         if (adminError) return adminError
+      }
+
+      if (options.requireRole && user?.role !== options.requireRole) {
+        return NextResponse.json(
+          { error: `${options.requireRole} access required` },
+          { status: 403 }
+        )
       }
 
       // Parse and sanitize request body
@@ -91,6 +100,7 @@ export function createSecureApi(
         request,
         user,
         clientIP,
+        body,
       }
 
       // Execute the handler

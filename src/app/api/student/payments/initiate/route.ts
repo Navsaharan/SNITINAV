@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { studentAuthOptions } from '@/lib/student-auth'
 import { prisma } from '@/lib/prisma'
 import { buildSafeApiRoute } from '@/lib/build-safe-api'
@@ -16,7 +16,7 @@ const initiatePaymentSchema = z.object({
 // POST /api/student/payments/initiate - Initiate payment process
 export const POST = buildSafeApiRoute(async (request: NextRequest) => {
   // Check authentication
-  const session = await getServerSession(studentAuthOptions)
+  const session = await getServerSession(studentAuthOptions) as { user?: { email?: string } } | null
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -94,7 +94,7 @@ export const POST = buildSafeApiRoute(async (request: NextRequest) => {
 
     // Select gateway (use provided or first available)
     const selectedGateway = validatedData.gateway 
-      ? availableGateways.find(g => g.gateway === validatedData.gateway)
+      ? availableGateways.find((g: { gateway: string }) => g.gateway === validatedData.gateway)
       : availableGateways[0]
 
     if (!selectedGateway) {

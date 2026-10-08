@@ -6,7 +6,7 @@ const globalForPrisma = globalThis as unknown as {
 
 // Create Prisma client with error handling for build time and serverless optimization
 function createPrismaClient() {
-  // Skip in build context
+  // Avoid constructing a live client during local production builds.
   if (process.env.NODE_ENV === 'production' && !process.env.VERCEL) {
     console.warn('Skipping Prisma Client creation in non-Vercel production')
     return null as any
@@ -18,16 +18,26 @@ function createPrismaClient() {
   }
 
   try {
-    // Add SSL configuration to the database URL if it's a Supabase connection
-    const databaseUrl = process.env.DATABASE_URL.includes('supabase')
-      ? `${process.env.DATABASE_URL}?sslmode=require&pgbouncer=true&connection_limit=5`
-      : process.env.DATABASE_URL
+    // Preserve existing PostgreSQL URL parameters (Supabase URLs already
+    // commonly include schema, pgbouncer, sslmode, and connection_limit).
+    const databaseUrl = new URL(process.env.DATABASE_URL)
+    if (databaseUrl.hostname.includes('supabase')) {
+      if (!databaseUrl.searchParams.has('sslmode')) {
+        databaseUrl.searchParams.set('sslmode', 'require')
+      }
+      if (!databaseUrl.searchParams.has('pgbouncer')) {
+        databaseUrl.searchParams.set('pgbouncer', 'true')
+      }
+      if (!databaseUrl.searchParams.has('connection_limit')) {
+        databaseUrl.searchParams.set('connection_limit', '5')
+      }
+    }
 
     return new PrismaClient({
       log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
       datasources: {
         db: {
-          url: databaseUrl
+          url: databaseUrl.toString()
         }
       }
     })

@@ -123,8 +123,9 @@ export default function ImagePlaceholderManager() {
     setPlaceholders(mergedPlaceholders)
     } catch (error) {
       console.error('Error loading placeholders:', error)
-      // Fallback to default placeholders if loading fails
-      setPlaceholders(defaultPlaceholders)
+      // The local default list is built after the endpoint responds; if the
+      // endpoint itself fails, keep the manager empty rather than stale.
+      setPlaceholders([])
     }
   }
 

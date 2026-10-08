@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
         heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
         external: Math.round(process.memoryUsage().external / 1024 / 1024)
       } : null,
-      database: await safeDatabaseOperation(
+      database: await safeDatabaseOperation<{ connected: boolean; info?: any; error?: string }>(
         async () => {
           const result = await prisma.$queryRaw`SELECT version() as version`
           return { connected: true, info: result }
@@ -76,7 +76,6 @@ export async function POST(request: NextRequest) {
         authentication: !!process.env.NEXTAUTH_SECRET,
         database: !!process.env.DATABASE_URL,
         supabase: !!(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY),
-        email: !!process.env.EMAIL_DOMAIN,
         payments: !!(process.env.RAZORPAY_KEY_ID || process.env.STRIPE_PUBLISHABLE_KEY)
       }
     }

@@ -3,7 +3,7 @@ import { ColorSettings } from './color-system'
 export interface ColorPreset {
   name: string
   description: string
-  colors: ColorSettings
+  colors: Partial<ColorSettings>
 }
 
 export const colorPresets: ColorPreset[] = [

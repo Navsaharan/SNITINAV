@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { studentAuthOptions } from '@/lib/student-auth'
 import { prisma } from '@/lib/prisma'
 import { buildSafeApiRoute } from '@/lib/build-safe-api'
@@ -7,7 +7,7 @@ import { buildSafeApiRoute } from '@/lib/build-safe-api'
 // GET /api/student/payments/history - Get payment history for student
 export const GET = buildSafeApiRoute(async (request: NextRequest) => {
   // Check authentication
-  const session = await getServerSession(studentAuthOptions)
+  const session = await getServerSession(studentAuthOptions) as { user?: { email?: string } } | null
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -85,7 +85,22 @@ export const GET = buildSafeApiRoute(async (request: NextRequest) => {
 
     return NextResponse.json({
       success: true,
-      payments: payments.map(payment => ({
+      payments: payments.map((payment: {
+        id: string
+        transactionId: string
+        amount: number
+        totalAmount: number
+        currency: string
+        feeType: string
+        description: string | null
+        gateway: string | null
+        status: string
+        receiptNumber: string | null
+        receiptUrl: string | null
+        createdAt: Date
+        completedAt: Date | null
+        catalogItem: unknown
+      }) => ({
         id: payment.id,
         transactionId: payment.transactionId,
         amount: payment.amount,

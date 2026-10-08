@@ -433,18 +433,12 @@ export class AdminService {
       responseTime?: number
     }>
   }> {
-    const checks = [
+    const checks: Array<{ name: string; status: 'pass' | 'fail' | 'warn'; message: string; responseTime?: number }> = [
       {
         name: 'Database Connection',
         status: 'pass' as const,
         message: 'Database is responding normally',
         responseTime: 12
-      },
-      {
-        name: 'Email Service',
-        status: 'pass' as const,
-        message: 'SMTP/IMAP/POP3 services operational',
-        responseTime: 45
       },
       {
         name: 'Storage System',

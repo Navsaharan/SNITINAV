@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
 
     // Calculate revenue statistics for each item
     const itemsWithStats = await Promise.all(
-      items.map(async (item) => {
+      items.map(async (item: { id: string; _count: { payments: number } }) => {
         const revenueStats = await prisma.payment.aggregate({
           where: {
             catalogItemId: item.id,

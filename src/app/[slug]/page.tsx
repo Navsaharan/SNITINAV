@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
+import type { ContentType } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import MainLayout from '@/components/layout/main-layout'
 import ContentRenderer from '@/components/content/content-renderer'
@@ -34,7 +35,7 @@ export async function generateStaticParams() {
       },
     })
 
-    return pages.map((page) => ({
+    return pages.map((page: { slug: string }) => ({
       slug: page.slug,
     }))
   } catch (error) {
@@ -170,7 +171,13 @@ export default async function DynamicPage({ params }: PageProps) {
               {/* Content Blocks */}
               {page.contents.length > 0 && (
                 <div className="space-y-8">
-                  {page.contents.map((content) => (
+                  {page.contents.map((content: {
+                    id: string
+                    title: string | null
+                    content: string | null
+                    type: ContentType
+                    data: string | null
+                  }) => (
                     <div key={content.id} className="content-block">
                       {content.title && (
                         <h2 className="text-2xl font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>

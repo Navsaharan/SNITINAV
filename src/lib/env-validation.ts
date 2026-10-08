@@ -24,10 +24,6 @@ interface EnvConfig {
   SITE_NAME?: string
   SITE_URL?: string
   
-  // Optional: Email Configuration
-  EMAIL_DOMAIN?: string
-  EMAIL_ADMIN?: string
-  
   // Optional: Payment Gateways
   RAZORPAY_KEY_ID?: string
   RAZORPAY_KEY_SECRET?: string
@@ -49,8 +45,6 @@ const requiredEnvVars = [
 const optionalEnvVars = [
   'SITE_NAME',
   'SITE_URL',
-  'EMAIL_DOMAIN',
-  'EMAIL_ADMIN',
   'RAZORPAY_KEY_ID',
   'RAZORPAY_KEY_SECRET',
   'STRIPE_PUBLISHABLE_KEY',

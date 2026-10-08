@@ -54,11 +54,11 @@ export default function NavigationManager({
     setDraggedItem(item)
     e.dataTransfer.effectAllowed = 'move'
     e.dataTransfer.setData('text/html', e.currentTarget.outerHTML)
-    e.currentTarget.style.opacity = '0.5'
+    ;(e.currentTarget as HTMLElement).style.opacity = '0.5'
   }
 
   const handleDragEnd = (e: React.DragEvent) => {
-    e.currentTarget.style.opacity = '1'
+    ;(e.currentTarget as HTMLElement).style.opacity = '1'
     setDraggedItem(null)
     setDragOverItem(null)
     dragCounter.current = 0

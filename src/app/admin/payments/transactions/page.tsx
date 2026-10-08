@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import AdminLayout from '@/components/admin/admin-layout'

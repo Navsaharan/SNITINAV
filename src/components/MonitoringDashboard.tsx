@@ -12,9 +12,7 @@ import {
   Activity, 
   Cpu, 
   HardDrive, 
-  Memory, 
   Network, 
-  Mail, 
   Shield, 
   AlertTriangle, 
   CheckCircle, 
@@ -25,8 +23,6 @@ import {
   TrendingUp,
   TrendingDown,
   Clock,
-  Server,
-  Database,
   Zap
 } from 'lucide-react'
 
@@ -76,14 +72,6 @@ export default function MonitoringDashboard({ userRole }: MonitoringDashboardPro
     }
   }
 
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes'
-    const k = 1024
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-  }
-
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat().format(Math.round(num))
   }
@@ -125,7 +113,7 @@ export default function MonitoringDashboard({ userRole }: MonitoringDashboardPro
   const OverviewTab = () => {
     if (!monitoringData?.data) return <div>Loading...</div>
 
-    const { system, email, security } = monitoringData.data
+    const { system, security } = monitoringData.data
 
     return (
       <div className="space-y-6">
@@ -144,7 +132,7 @@ export default function MonitoringDashboard({ userRole }: MonitoringDashboardPro
               title="Memory Usage"
               value={system.memory.usagePercentage.toFixed(1)}
               unit="%"
-              icon={Memory}
+              icon={HardDrive}
               threshold={{ warning: 80, critical: 90 }}
             />
             <MetricCard
@@ -160,87 +148,6 @@ export default function MonitoringDashboard({ userRole }: MonitoringDashboardPro
               unit=""
               icon={Activity}
             />
-          </div>
-        </div>
-
-        {/* Email System Metrics */}
-        <div>
-          <h3 className="text-lg font-medium mb-4">Email System</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  SMTP
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm">Active Connections</span>
-                    <span className="font-medium">{email.smtp.activeConnections}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Emails Sent</span>
-                    <span className="font-medium">{formatNumber(email.smtp.emailsSent)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Response Time</span>
-                    <span className="font-medium">{email.smtp.averageResponseTime.toFixed(0)}ms</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Database className="h-4 w-4" />
-                  IMAP
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm">Active Connections</span>
-                    <span className="font-medium">{email.imap.activeConnections}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Commands Processed</span>
-                    <span className="font-medium">{formatNumber(email.imap.commandsProcessed)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Response Time</span>
-                    <span className="font-medium">{email.imap.averageResponseTime.toFixed(0)}ms</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Server className="h-4 w-4" />
-                  POP3
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm">Active Connections</span>
-                    <span className="font-medium">{email.pop3.activeConnections}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Commands Processed</span>
-                    <span className="font-medium">{formatNumber(email.pop3.commandsProcessed)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Response Time</span>
-                    <span className="font-medium">{email.pop3.averageResponseTime.toFixed(0)}ms</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
 
@@ -275,37 +182,6 @@ export default function MonitoringDashboard({ userRole }: MonitoringDashboardPro
           </div>
         </div>
 
-        {/* Storage Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Storage Overview</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <p className="text-sm font-medium mb-2">Total Emails</p>
-                <p className="text-2xl font-bold">{formatNumber(email.storage.totalEmails)}</p>
-                <p className="text-sm text-muted-foreground">
-                  {formatBytes(email.storage.totalSize)} total size
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-medium mb-2">Attachments</p>
-                <p className="text-2xl font-bold">{formatBytes(email.storage.attachmentSize)}</p>
-                <p className="text-sm text-muted-foreground">
-                  {((email.storage.attachmentSize / email.storage.totalSize) * 100).toFixed(1)}% of total
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-medium mb-2">Index Size</p>
-                <p className="text-2xl font-bold">{formatBytes(email.storage.indexSize)}</p>
-                <p className="text-sm text-muted-foreground">
-                  Search and metadata
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     )
   }

@@ -25,6 +25,7 @@ yarn-error.log*
 # Local env files
 .env*.local
 .env
+.env.production
 
 # Vercel
 .vercel
@@ -49,6 +50,7 @@ logs
 
 # Cache
 .cache
+*.tsbuildinfo
 .temp
 .tmp
 node_modules

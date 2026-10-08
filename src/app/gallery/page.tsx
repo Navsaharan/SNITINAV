@@ -20,7 +20,15 @@ export const metadata: Metadata = {
 
 export default async function GalleryPage() {
   // Fetch gallery images from media with categories
-  let galleryImages = []
+  let galleryImages: Array<{
+    id: string
+    filename: string
+    originalName: string
+    url: string
+    alt: string | null
+    caption: string | null
+    category: string | null
+  }> = []
 
   try {
     galleryImages = await prisma.media.findMany({

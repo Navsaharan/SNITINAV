@@ -64,7 +64,12 @@ export default withAuth(
           }
           // For other student routes, require authentication and student role
           console.log("Middleware student auth check - token:", !!token, "role:", token?.role, "userType:", token?.userType)
-          return !!token && (token.userType === 'STUDENT' || ['STUDENT', 'FACULTY', 'STAFF'].includes(token.role))
+          return !!token && (
+            token.userType === 'STUDENT' ||
+            token.role === 'STUDENT' ||
+            token.role === 'FACULTY' ||
+            token.role === 'STAFF'
+          )
         }
 
         // Allow access to all other routes

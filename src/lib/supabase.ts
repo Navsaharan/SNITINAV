@@ -63,43 +63,6 @@ export const listFiles = async (bucket: string, folder?: string) => {
   return data
 }
 
-// Email attachment helpers
-export const uploadEmailAttachment = async (emailId: string, file: File) => {
-  const fileExt = file.name.split('.').pop()
-  const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
-  const filePath = `emails/${emailId}/${fileName}`
-
-  try {
-    const data = await uploadFile('email-attachments', filePath, file)
-    return {
-      ...data,
-      url: getFileUrl('email-attachments', filePath),
-      path: filePath
-    }
-  } catch (error) {
-    console.error('Failed to upload email attachment:', error)
-    throw new Error(`Failed to upload attachment: ${file.name}`)
-  }
-}
-
-export const deleteEmailAttachment = async (filePath: string) => {
-  try {
-    await deleteFile('email-attachments', filePath)
-  } catch (error) {
-    console.error('Failed to delete email attachment:', error)
-    throw new Error('Failed to delete attachment')
-  }
-}
-
-export const getEmailAttachmentUrl = async (filePath: string, expiresIn: number = 3600) => {
-  try {
-    return await getSignedUrl('email-attachments', filePath, expiresIn)
-  } catch (error) {
-    console.error('Failed to get attachment URL:', error)
-    throw new Error('Failed to get attachment URL')
-  }
-}
-
 // Payment receipt helpers
 export const uploadPaymentReceipt = async (paymentId: string, buffer: ArrayBuffer) => {
   const fileName = `receipt-${paymentId}-${Date.now()}.pdf`
@@ -113,22 +76,6 @@ export const uploadPaymentReceipt = async (paymentId: string, buffer: ArrayBuffe
 }
 
 // Database helpers for real-time subscriptions
-export const subscribeToEmails = (accountId: string, callback: (payload: any) => void) => {
-  return supabase
-    .channel('email-changes')
-    .on(
-      'postgres_changes',
-      {
-        event: '*',
-        schema: 'public',
-        table: 'emails',
-        filter: `fromEmail=eq.${accountId}`
-      },
-      callback
-    )
-    .subscribe()
-}
-
 export const subscribeToPayments = (studentId: string, callback: (payload: any) => void) => {
   return supabase
     .channel('payment-changes')

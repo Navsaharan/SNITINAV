@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
@@ -242,7 +242,19 @@ async function exportPaymentData(filters: any) {
     take: 10000 // Limit for performance
   })
 
-  const exportData = payments.map(payment => ({
+  const exportData = payments.map((payment: {
+    transactionId: string
+    student: { email: string; displayName: string | null }
+    feeType: string
+    totalAmount: number
+    currency: string
+    status: string
+    gateway: string
+    paymentMethod: string
+    createdAt: Date
+    completedAt: Date | null
+    dueDate: Date | null
+  }) => ({
     transactionId: payment.transactionId,
     studentEmail: payment.student.email,
     studentName: payment.student.displayName,
@@ -279,7 +291,15 @@ async function performReconciliation(filters: any) {
   })
 
   // Group by gateway for reconciliation
-  const reconciliation = payments.reduce((acc: any, payment) => {
+  const reconciliation = payments.reduce((acc: any, payment: {
+    gateway: string
+    totalAmount: number
+    status: string
+    id: string
+    transactionId: string
+    createdAt: Date
+    student: { email: string; displayName: string | null }
+  }) => {
     const gateway = payment.gateway
     if (!acc[gateway]) {
       acc[gateway] = {
@@ -325,7 +345,7 @@ async function performReconciliation(filters: any) {
     summary: {
       totalGateways: Object.keys(reconciliation).length,
       totalTransactions: payments.length,
-      totalAmount: payments.reduce((sum, p) => sum + p.totalAmount, 0),
+      totalAmount: payments.reduce((sum: number, p: { totalAmount: number }) => sum + p.totalAmount, 0),
       reconciledAt: new Date().toISOString()
     }
   })

@@ -8,7 +8,9 @@ export async function GET(request: NextRequest) {
     // Check cache first
     const cached = cache.get(CACHE_KEYS.NAVIGATION_ITEMS)
     if (cached) {
-      return NextResponse.json({ navigation: cached })
+      return NextResponse.json({ navigation: cached }, {
+        headers: { 'X-Data-Source': 'prisma' }
+      })
     }
 
     const navigationItems = await prisma.navigationItem.findMany({
@@ -59,48 +61,17 @@ export async function GET(request: NextRequest) {
     // Cache for 5 minutes
     cache.set(CACHE_KEYS.NAVIGATION_ITEMS, menuItems, 300)
 
-    return NextResponse.json({ navigation: menuItems })
+    return NextResponse.json({ navigation: menuItems }, {
+      headers: { 'X-Data-Source': 'prisma' }
+    })
   } catch (error) {
     console.error('Public Navigation API Error:', error)
-
-    // Return default navigation structure as fallback
-    const defaultNavigation = [
-      {
-        id: 'nav-home',
-        title: 'Home',
-        href: '/',
-        parentId: null,
-        order: 0,
-        isVisible: true,
-        linkType: 'internal',
-        target: '_self',
-        children: []
-      },
-      {
-        id: 'nav-about',
-        title: 'About Us',
-        href: null,
-        parentId: null,
-        order: 1,
-        isVisible: true,
-        linkType: 'dropdown',
-        target: '_self',
-        children: [
-          {
-            id: 'nav-about-institute',
-            title: 'About Institute',
-            href: '/about-institute',
-            parentId: 'nav-about',
-            order: 0,
-            isVisible: true,
-            linkType: 'internal',
-            target: '_self',
-            children: []
-          }
-        ]
+    return NextResponse.json({ error: 'Navigation data is temporarily unavailable' }, {
+      status: 503,
+      headers: {
+        'Cache-Control': 'no-store',
+        'X-Data-Source': 'unavailable'
       }
-    ]
-
-    return NextResponse.json({ navigation: defaultNavigation })
+    })
   }
 }

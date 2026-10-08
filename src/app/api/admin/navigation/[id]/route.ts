@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { validators } from '@/lib/secure-api'
@@ -8,7 +8,7 @@ import { buildSafeApiRoute, safePrismaOperation } from '@/lib/build-safe-api'
 // GET /api/admin/navigation/[id] - Get specific navigation item
 export const GET = buildSafeApiRoute(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
   // Check authentication
   const session = await getServerSession(authOptions)
@@ -16,7 +16,7 @@ export const GET = buildSafeApiRoute(async (
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const id = params.id
+  const id = (await params).id
 
   const navigationItem = await safePrismaOperation(() =>
     prisma.navigationItem.findUnique({
@@ -51,7 +51,7 @@ export const GET = buildSafeApiRoute(async (
 // PUT /api/admin/navigation/[id] - Update navigation item
 export const PUT = buildSafeApiRoute(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
   // Check authentication
   const session = await getServerSession(authOptions)
@@ -59,12 +59,12 @@ export const PUT = buildSafeApiRoute(async (
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-    const id = params.id
+    const id = (await params).id
     const body = await request.json()
     const { title, href, parentId, order, isVisible, linkType, target, description, icon, cssClass } = body
 
     // Check if navigation item exists
-    const existingItem = await safePrismaOperation(() =>
+    const existingItem = await safePrismaOperation<{ parentId: string | null }>(() =>
       prisma.navigationItem.findUnique({
         where: { id }
       })
@@ -133,7 +133,7 @@ export const PUT = buildSafeApiRoute(async (
 // DELETE /api/admin/navigation/[id] - Delete navigation item
 export const DELETE = buildSafeApiRoute(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
   // Check authentication
   const session = await getServerSession(authOptions)
@@ -141,10 +141,10 @@ export const DELETE = buildSafeApiRoute(async (
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-    const id = params.id
+    const id = (await params).id
 
     // Check if navigation item exists
-    const existingItem = await safePrismaOperation(() =>
+    const existingItem = await safePrismaOperation<{ children: Array<{ id: string }> }>(() =>
       prisma.navigationItem.findUnique({
         where: { id },
         include: {
@@ -177,7 +177,7 @@ export const DELETE = buildSafeApiRoute(async (
 async function getDescendants(itemId: string): Promise<string[]> {
   const descendants: string[] = []
 
-  const children = await safePrismaOperation(() =>
+  const children = await safePrismaOperation<Array<{ id: string }>>(() =>
     prisma.navigationItem.findMany({
       where: { parentId: itemId },
       select: { id: true }

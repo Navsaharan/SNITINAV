@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { buildSafeApiRoute } from '@/lib/build-safe-api'
 import { MonitoringService } from '@/lib/monitoring-service'
@@ -23,14 +23,12 @@ export const GET = buildSafeApiRoute(async (request: NextRequest) => {
     switch (type) {
       case 'overview':
         const systemMetrics = await monitoringService.collectSystemMetrics()
-        const emailMetrics = await monitoringService.collectEmailMetrics()
         const securityMetrics = await monitoringService.collectSecurityMetrics()
 
         return NextResponse.json({
           type: 'overview',
           data: {
             system: systemMetrics,
-            email: emailMetrics,
             security: securityMetrics,
             timestamp: new Date().toISOString()
           }
@@ -41,13 +39,6 @@ export const GET = buildSafeApiRoute(async (request: NextRequest) => {
         return NextResponse.json({
           type: 'system',
           data: systemData
-        })
-
-      case 'email':
-        const emailData = await monitoringService.collectEmailMetrics()
-        return NextResponse.json({
-          type: 'email',
-          data: emailData
         })
 
       case 'security':
@@ -118,12 +109,6 @@ export const GET = buildSafeApiRoute(async (request: NextRequest) => {
               details: await monitoringService.collectSystemMetrics()
             },
             {
-              name: 'Email Services',
-              status: 'pass',
-              message: 'All email services operational',
-              details: await monitoringService.collectEmailMetrics()
-            },
-            {
               name: 'Security Systems',
               status: 'pass',
               message: 'Security systems functioning normally',
@@ -140,7 +125,7 @@ export const GET = buildSafeApiRoute(async (request: NextRequest) => {
       default:
         return NextResponse.json({
           error: 'Invalid monitoring type',
-          availableTypes: ['overview', 'system', 'email', 'security', 'analytics', 'alerts', 'health']
+          availableTypes: ['overview', 'system', 'security', 'analytics', 'alerts', 'health']
         }, { status: 400 })
     }
 
@@ -267,10 +252,6 @@ export const POST = buildSafeApiRoute(async (request: NextRequest) => {
 
         if (metricsType === 'all' || metricsType === 'system') {
           collectedMetrics.system = await monitoringService.collectSystemMetrics()
-        }
-
-        if (metricsType === 'all' || metricsType === 'email') {
-          collectedMetrics.email = await monitoringService.collectEmailMetrics()
         }
 
         if (metricsType === 'all' || metricsType === 'security') {

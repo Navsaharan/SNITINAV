@@ -19,12 +19,9 @@ import {
   Lock,
   TestTube,
   Navigation,
-  Mail,
   CreditCard,
-  Shield,
   BarChart3,
-  Database,
-  UserCheck
+  Database
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -47,16 +44,6 @@ const navigation = [
   { name: 'Media', href: '/admin/media', icon: Image },
   { name: 'Images', href: '/admin/images', icon: ImageIcon },
   { name: 'Faculty', href: '/admin/faculty', icon: Users },
-  {
-    name: 'Email Management',
-    href: '/admin/email',
-    icon: Mail,
-    submenu: [
-      { name: 'Email Accounts', href: '/admin/email/accounts', icon: UserCheck },
-      { name: 'Email Monitoring', href: '/admin/email/monitoring', icon: Shield },
-      { name: 'Email Analytics', href: '/admin/email/analytics', icon: BarChart3 }
-    ]
-  },
   {
     name: 'Payment Management',
     href: '/admin/payments',

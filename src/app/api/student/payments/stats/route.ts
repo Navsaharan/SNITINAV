@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { studentAuthOptions } from '@/lib/student-auth'
 import { prisma } from '@/lib/prisma'
 import { buildSafeApiRoute } from '@/lib/build-safe-api'
@@ -7,7 +7,7 @@ import { buildSafeApiRoute } from '@/lib/build-safe-api'
 // GET /api/student/payments/stats - Get payment statistics for student
 export const GET = buildSafeApiRoute(async (request: NextRequest) => {
   // Check authentication
-  const session = await getServerSession(studentAuthOptions)
+  const session = await getServerSession(studentAuthOptions) as { user?: { email?: string } } | null
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
@@ -93,7 +93,7 @@ export const GET = buildSafeApiRoute(async (request: NextRequest) => {
 
     const paidCatalogItemIds = new Set(
       existingPayments
-        .map(p => p.catalogItemId)
+        .map((p: { catalogItemId: string | null }) => p.catalogItemId)
         .filter(Boolean)
     )
 
@@ -105,7 +105,13 @@ export const GET = buildSafeApiRoute(async (request: NextRequest) => {
 
     const now = new Date()
 
-    catalogItems.forEach(item => {
+    catalogItems.forEach((item: {
+      id: string
+      amount: number
+      dueDate: Date | null
+      lateFee: number
+      isRecurring: boolean
+    }) => {
       // Skip if already paid (unless recurring)
       if (!item.isRecurring && paidCatalogItemIds.has(item.id)) {
         return
