@@ -93,12 +93,19 @@ export const studentAuthOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.userType = user.type
-        token.type = user.type
-        token.studentId = user.studentId
-        token.department = user.department
-        token.firstName = user.firstName
-        token.lastName = user.lastName
+        const studentUser = user as typeof user & {
+          type?: string
+          studentId?: string | null
+          department?: string | null
+          firstName?: string | null
+          lastName?: string | null
+        }
+        token.userType = studentUser.type
+        token.type = studentUser.type
+        token.studentId = studentUser.studentId
+        token.department = studentUser.department
+        token.firstName = studentUser.firstName
+        token.lastName = studentUser.lastName
       }
       return token
     },
