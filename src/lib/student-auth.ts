@@ -111,12 +111,23 @@ export const studentAuthOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (token) {
-        session.user.id = token.sub!
-        session.user.type = token.type as string
-        session.user.studentId = token.studentId as string
-        session.user.department = token.department as string
-        session.user.firstName = token.firstName as string
-        session.user.lastName = token.lastName as string
+        const sessionUser = (session.user ?? {}) as NonNullable<typeof session.user> & {
+          id: string
+          role: string
+          type?: string
+          studentId?: string | null
+          department?: string | null
+          firstName?: string | null
+          lastName?: string | null
+        }
+        sessionUser.id = token.sub ?? ''
+        sessionUser.role = typeof token.role === 'string' ? token.role : sessionUser.role || 'STUDENT'
+        sessionUser.type = token.type as string | undefined
+        sessionUser.studentId = token.studentId as string | null | undefined
+        sessionUser.department = token.department as string | null | undefined
+        sessionUser.firstName = token.firstName as string | null | undefined
+        sessionUser.lastName = token.lastName as string | null | undefined
+        session.user = sessionUser
       }
       return session
     },
