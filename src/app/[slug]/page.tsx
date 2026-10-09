@@ -18,11 +18,19 @@ interface PageProps {
 
 // Generate static params for all published pages
 export async function generateStaticParams() {
-  // During build time, return empty array to avoid database connection issues
-  // Pages will be generated on-demand using dynamic rendering
-  if (process.env.NODE_ENV === 'production' && process.env.VERCEL_ENV === 'production') {
-    return []
-  }
+  const pages = await prisma.page.findMany({
+    where: {
+      status: 'PUBLISHED',
+    },
+    select: {
+      slug: true,
+    },
+  })
+
+  return pages.map((page: { slug: string }) => ({
+    slug: page.slug,
+  }))
+}
 
   try {
     const pages = await prisma.page.findMany({
