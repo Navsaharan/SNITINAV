@@ -1,4 +1,3 @@
-
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import type { ContentType } from '@prisma/client'
@@ -17,7 +16,9 @@ interface PageProps {
 }
 
 // Pre-generate published pages during deployment
-export async function generateStaticParams() {
+export async function generateStaticParams(): Promise<
+  Array<{ slug: string }>
+> {
   const pages = await prisma.page.findMany({
     where: {
       status: 'PUBLISHED',
@@ -27,7 +28,7 @@ export async function generateStaticParams() {
     },
   })
 
-  return pages.map((page) => ({
+  return pages.map((page: { slug: string }) => ({
     slug: page.slug,
   }))
 }
@@ -58,18 +59,21 @@ export async function generateMetadata({
     }
   }
 
+  const title = page.metaTitle || page.title
+  const description = page.metaDesc || page.description || ''
+
   return {
-    title: page.metaTitle || page.title,
-    description: page.metaDesc || page.description || '',
+    title,
+    description,
     openGraph: {
-      title: page.metaTitle || page.title,
-      description: page.metaDesc || page.description || '',
+      title,
+      description,
       type: 'website',
     },
     twitter: {
       card: 'summary',
-      title: page.metaTitle || page.title,
-      description: page.metaDesc || page.description || '',
+      title,
+      description,
     },
   }
 }
@@ -84,7 +88,9 @@ export default async function DynamicPage({ params }: PageProps) {
     },
     include: {
       contents: {
-        orderBy: { order: 'asc' },
+        orderBy: {
+          order: 'asc',
+        },
       },
       parent: {
         select: {
@@ -103,7 +109,9 @@ export default async function DynamicPage({ params }: PageProps) {
           slug: true,
           description: true,
         },
-        orderBy: { order: 'asc' },
+        orderBy: {
+          order: 'asc',
+        },
       },
     },
   })
@@ -112,7 +120,7 @@ export default async function DynamicPage({ params }: PageProps) {
     notFound()
   }
 
-  const breadcrumbs = []
+  const breadcrumbs: Array<{ label: string; href: string }> = []
 
   if (page.parent) {
     breadcrumbs.push({
@@ -163,30 +171,34 @@ export default async function DynamicPage({ params }: PageProps) {
 
               {page.contents.length > 0 && (
                 <div className="space-y-8">
-                  {page.contents.map((content: {
-                    id: string
-                    title: string | null
-                    content: string | null
-                    type: ContentType
-                    data: string | null
-                  }) => (
-                    <div key={content.id} className="content-block">
-                      {content.title && (
-                        <h2
-                          className="text-2xl font-bold mb-4"
-                          style={{ color: 'var(--color-text-primary)' }}
-                        >
-                          {content.title}
-                        </h2>
-                      )}
+                  {page.contents.map(
+                    (content: {
+                      id: string
+                      title: string | null
+                      content: string | null
+                      type: ContentType
+                      data: string | null
+                    }) => (
+                      <div key={content.id} className="content-block">
+                        {content.title && (
+                          <h2
+                            className="text-2xl font-bold mb-4"
+                            style={{
+                              color: 'var(--color-text-primary)',
+                            }}
+                          >
+                            {content.title}
+                          </h2>
+                        )}
 
-                      <ContentRenderer
-                        content={content.content || ''}
-                        type={content.type}
-                        data={content.data}
-                      />
-                    </div>
-                  ))}
+                        <ContentRenderer
+                          content={content.content || ''}
+                          type={content.type}
+                          data={content.data}
+                        />
+                      </div>
+                    ),
+                  )}
                 </div>
               )}
             </div>
