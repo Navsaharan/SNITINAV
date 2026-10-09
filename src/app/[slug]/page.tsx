@@ -1,5 +1,6 @@
+
 import { notFound } from 'next/navigation'
-import { Metadata } from 'next'
+import type { Metadata } from 'next'
 import type { ContentType } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import MainLayout from '@/components/layout/main-layout'
@@ -7,7 +8,6 @@ import ContentRenderer from '@/components/content/content-renderer'
 import Breadcrumbs from '@/components/ui/breadcrumbs'
 import PageSidebar from '@/components/page/page-sidebar'
 
-// Force dynamic rendering for this page to avoid build-time database issues
 export const revalidate = 60
 
 interface PageProps {
@@ -16,7 +16,7 @@ interface PageProps {
   }>
 }
 
-// Generate static params for all published pages
+// Pre-generate published pages during deployment
 export async function generateStaticParams() {
   const pages = await prisma.page.findMany({
     where: {
@@ -27,86 +27,61 @@ export async function generateStaticParams() {
     },
   })
 
-  return pages.map((page: { slug: string }) => ({
+  return pages.map((page) => ({
     slug: page.slug,
   }))
 }
 
-  try {
-    const pages = await prisma.page.findMany({
-      where: {
-        status: 'PUBLISHED',
-      },
-      select: {
-        slug: true,
-      },
-    })
+// Generate SEO metadata
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const { slug } = await params
 
-    return pages.map((page: { slug: string }) => ({
-      slug: page.slug,
-    }))
-  } catch (error) {
-    console.error('Error generating static params:', error)
-    return []
-  }
-}
+  const page = await prisma.page.findUnique({
+    where: {
+      slug,
+      status: 'PUBLISHED',
+    },
+    select: {
+      title: true,
+      description: true,
+      metaTitle: true,
+      metaDesc: true,
+    },
+  })
 
-// Generate metadata for SEO
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  try {
-    const { slug } = await params
-    const page = await prisma.page.findUnique({
-      where: {
-        slug: slug,
-        status: 'PUBLISHED',
-      },
-      select: {
-        title: true,
-        description: true,
-        metaTitle: true,
-        metaDesc: true,
-      },
-    })
-
-    if (!page) {
-      return {
-        title: 'Page Not Found',
-        description: 'The requested page could not be found.',
-      }
-    }
-
+  if (!page) {
     return {
+      title: 'Page Not Found',
+      description: 'The requested page could not be found.',
+    }
+  }
+
+  return {
+    title: page.metaTitle || page.title,
+    description: page.metaDesc || page.description || '',
+    openGraph: {
       title: page.metaTitle || page.title,
       description: page.metaDesc || page.description || '',
-      openGraph: {
-        title: page.metaTitle || page.title,
-        description: page.metaDesc || page.description || '',
-        type: 'website',
-      },
-      twitter: {
-        card: 'summary',
-        title: page.metaTitle || page.title,
-        description: page.metaDesc || page.description || '',
-      },
-    }
-  } catch (error) {
-    console.error('Error generating metadata:', error)
-    return {
-      title: 'Page Error',
-      description: 'An error occurred while loading the page.',
-    }
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary',
+      title: page.metaTitle || page.title,
+      description: page.metaDesc || page.description || '',
+    },
   }
 }
 
 export default async function DynamicPage({ params }: PageProps) {
-  try {
-    const { slug } = await params
-    // Fetch the page with all its content and relationships
-    const page = await prisma.page.findUnique({
-      where: {
-        slug: slug,
-        status: 'PUBLISHED',
-      },
+  const { slug } = await params
+
+  const page = await prisma.page.findUnique({
+    where: {
+      slug,
+      status: 'PUBLISHED',
+    },
     include: {
       contents: {
         orderBy: { order: 'asc' },
@@ -137,14 +112,15 @@ export default async function DynamicPage({ params }: PageProps) {
     notFound()
   }
 
-  // Build breadcrumb trail
   const breadcrumbs = []
+
   if (page.parent) {
     breadcrumbs.push({
       label: page.parent.title,
       href: `/${page.parent.slug}`,
     })
   }
+
   breadcrumbs.push({
     label: page.title,
     href: `/${page.slug}`,
@@ -154,28 +130,37 @@ export default async function DynamicPage({ params }: PageProps) {
     <MainLayout>
       <div className="py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Breadcrumbs */}
           <Breadcrumbs items={breadcrumbs} />
 
-          {/* Page Header */}
           <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>{page.title}</h1>
+            <h1
+              className="text-4xl font-bold mb-4"
+              style={{ color: 'var(--color-text-primary)' }}
+            >
+              {page.title}
+            </h1>
+
             {page.description && (
-              <p className="text-xl max-w-3xl" style={{ color: 'var(--color-text-secondary)' }}>{page.description}</p>
+              <p
+                className="text-xl max-w-3xl"
+                style={{ color: 'var(--color-text-secondary)' }}
+              >
+                {page.description}
+              </p>
             )}
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Main Content */}
             <div className="lg:col-span-3">
-              {/* Page Content */}
               {page.content && (
-                <div className="prose prose-lg max-w-none mb-8" style={{ color: 'var(--color-text-primary)' }}>
+                <div
+                  className="prose prose-lg max-w-none mb-8"
+                  style={{ color: 'var(--color-text-primary)' }}
+                >
                   <ContentRenderer content={page.content} />
                 </div>
               )}
 
-              {/* Content Blocks */}
               {page.contents.length > 0 && (
                 <div className="space-y-8">
                   {page.contents.map((content: {
@@ -187,12 +172,16 @@ export default async function DynamicPage({ params }: PageProps) {
                   }) => (
                     <div key={content.id} className="content-block">
                       {content.title && (
-                        <h2 className="text-2xl font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
+                        <h2
+                          className="text-2xl font-bold mb-4"
+                          style={{ color: 'var(--color-text-primary)' }}
+                        >
                           {content.title}
                         </h2>
                       )}
-                      <ContentRenderer 
-                        content={content.content || ''} 
+
+                      <ContentRenderer
+                        content={content.content || ''}
                         type={content.type}
                         data={content.data}
                       />
@@ -202,7 +191,6 @@ export default async function DynamicPage({ params }: PageProps) {
               )}
             </div>
 
-            {/* Sidebar */}
             <div className="lg:col-span-1">
               <PageSidebar childPages={page.children} />
             </div>
@@ -211,8 +199,4 @@ export default async function DynamicPage({ params }: PageProps) {
       </div>
     </MainLayout>
   )
-  } catch (error) {
-    console.error('Error loading page:', error)
-    notFound()
-  }
 }
