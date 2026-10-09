@@ -38,16 +38,6 @@
       ]
     }
   ],
-  "rewrites": [
-    {
-      "source": "/admin/(.*)",
-      "destination": "/admin"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/"
-    }
-  ],
   "env": {
     "NODE_ENV": "production",
     "VERCEL_ENV": "production"
