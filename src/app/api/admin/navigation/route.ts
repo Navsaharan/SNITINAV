@@ -142,5 +142,5 @@ export const PUT = createSecureApi(
 
     return NextResponse.json({ navigation: navigationItems })
   },
-  { requireAuth: true, requireRole: 'EDITOR' }
+  { requireAdmin: true }
 )
