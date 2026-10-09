@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
 
     // Generate temporary links for privately stored PDFs.
     const mediaWithUrls = await Promise.all(
-      media.map(async (item) => {
+     media.map(async (item: (typeof media)[number]) => {
         if (!item.url.startsWith('storage://')) {
           return item
         }
