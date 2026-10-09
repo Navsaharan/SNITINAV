@@ -8,8 +8,7 @@ import Breadcrumbs from '@/components/ui/breadcrumbs'
 import PageSidebar from '@/components/page/page-sidebar'
 
 // Force dynamic rendering for this page to avoid build-time database issues
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+export const revalidate = 60
 
 interface PageProps {
   params: Promise<{
