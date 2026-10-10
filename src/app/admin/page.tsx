@@ -37,24 +37,9 @@ export default function AdminDashboard() {
 
   const fetchStats = async () => {
     try {
-      const [pagesRes, contentRes, mediaRes] = await Promise.all([
-        fetch('/api/pages'),
-        fetch('/api/content'),
-        fetch('/api/media')
-      ])
-
-      const [pages, content, media] = await Promise.all([
-        pagesRes.ok ? pagesRes.json() : [],
-        contentRes.ok ? contentRes.json() : [],
-        mediaRes.ok ? mediaRes.json() : { media: [] }
-      ])
-
-      setStats({
-        pageCount: Array.isArray(pages) ? pages.length : 0,
-        contentCount: Array.isArray(content) ? content.length : 0,
-        mediaCount: media.media ? media.media.length : 0,
-        viewCount: 0
-      })
+      const response = await fetch('/api/admin/dashboard-stats', { cache: 'no-store' })
+      if (!response.ok) throw new Error('Could not load dashboard statistics')
+      setStats(await response.json())
     } catch (error) {
       console.error('Error fetching stats:', error)
     } finally {

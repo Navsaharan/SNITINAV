@@ -49,6 +49,8 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@ckeditor/ckeditor5-build-classic": "^44.3.0",
+    "@ckeditor/ckeditor5-react": "^9.5.0",
     "@hello-pangea/dnd": "^18.0.1",
     "@hookform/resolvers": "^5.1.1",
     "@next-auth/prisma-adapter": "^1.0.7",

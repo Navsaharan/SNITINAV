@@ -15,6 +15,7 @@ interface ExtendedUser {
 import Link from 'next/link'
 
 interface SiteSettings {
+  preferred_rich_text_editor: string
   site_name: string
   site_description: string
   contact_email: string
@@ -27,6 +28,7 @@ interface SiteSettings {
 export default function AdminSettings() {
   const { data: session, status } = useSession()
   const [settings, setSettings] = useState<SiteSettings>({
+    preferred_rich_text_editor: 'tiptap',
     site_name: '',
     site_description: '',
     contact_email: '',
@@ -59,6 +61,7 @@ export default function AdminSettings() {
       if (response.ok) {
         const settingsData = await response.json()
         const formattedSettings: SiteSettings = {
+          preferred_rich_text_editor: settingsData.preferred_rich_text_editor?.value || 'tiptap',
           site_name: settingsData.site_name?.value || 'S.N. Pvt. Industrial Training Institute',
           site_description: settingsData.site_description?.value || 'Premier technical education institution in Rajasthan',
           contact_email: settingsData.contact_email?.value || 'snitcsrdr@gmail.com',
@@ -86,7 +89,7 @@ export default function AdminSettings() {
       const settingsArray = Object.entries(settings).map(([key, value]) => ({
         key,
         value,
-        type: 'TEXT'
+        type: 'STRING'
       }))
 
       const response = await fetch('/api/settings', {
@@ -199,6 +202,14 @@ export default function AdminSettings() {
             <div className="bg-white shadow rounded-lg p-6">
               <h3 className="text-lg font-medium text-gray-900 mb-6">General Settings</h3>
               <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Preferred rich text editor</label>
+                  <select value={settings.preferred_rich_text_editor} onChange={(e) => handleInputChange('preferred_rich_text_editor', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="tiptap">TipTap — full-featured formatting and tables</option>
+                    <option value="ckeditor">CKEditor 5 — familiar toolbar and structured editing</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">Applies to page content editors. Existing page content remains stored as HTML.</p>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Site Name

@@ -43,20 +43,25 @@ export default function HomepageSlideshow() {
 
   const fetchSlideshowImages = async () => {
     try {
-      const response = await fetch('/api/slideshow')
+      const [response, placeholderResponse] = await Promise.all([fetch('/api/slideshow'), fetch('/api/placeholders')])
       
       if (!response.ok) {
         throw new Error(`API request failed with status ${response.status}`)
       }
       
       const data = await response.json()
+      const placeholderData = placeholderResponse.ok ? await placeholderResponse.json() : { placeholders: [] }
+      const placeholderImages = Object.fromEntries((placeholderData.placeholders || []).map((entry: { key: string; value: string }) => {
+        try { return [entry.key.replace(/^placeholder_/, ''), JSON.parse(entry.value).imageUrl] } catch { return ['', ''] }
+      })) as Record<string, string>
+      const defaultImages = DEFAULT_IMAGES.map((image, index) => ({ ...image, url: placeholderImages[['infrastructure_main_building', 'infrastructure_workshop', 'events_annual_function'][index]] || image.url }))
       
       // Only update if we have valid images
       if (Array.isArray(data.images) && data.images.length > 0) {
-        setImages(data.images)
+        setImages(data.images.map((image: SlideshowImage, index: number) => ({ ...image, url: image.id.startsWith('default-') ? (defaultImages[index]?.url || image.url) : image.url })))
       } else {
         console.warn('No slideshow images found, using defaults')
-        setImages(DEFAULT_IMAGES)
+        setImages(defaultImages)
       }
     } catch (error) {
       console.error('Error fetching slideshow images:', error)

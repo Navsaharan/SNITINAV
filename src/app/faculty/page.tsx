@@ -48,6 +48,13 @@ async function getFacultyMembers(): Promise<FacultyMember[]> {
 }
 export default async function FacultyPage() {
   const facultyMembers = await getFacultyMembers()
+  let placeholderImages: Record<string, string> = {}
+  try {
+    const saved = await prisma.setting.findMany({ where: { key: { in: ['placeholder_faculty_principal', 'placeholder_faculty_instructor_1'] } } })
+    placeholderImages = Object.fromEntries(saved.flatMap((item: { key: string; value: string }) => {
+      try { return [[item.key.replace('placeholder_', ''), JSON.parse(item.value).imageUrl as string]] } catch { return [] }
+    }))
+  } catch (error) { console.error('Could not load faculty placeholders:', error) }
   return (
     <MainLayout>
       <div className="min-h-screen bg-gray-50">
@@ -91,7 +98,7 @@ export default async function FacultyPage() {
                     ) : (
                       <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-blue-100 bg-blue-50">
                         <Image
-                          src="/images/faculty-placeholder.svg"
+                          src={placeholderImages[facultyMembers.indexOf(faculty) === 0 ? 'faculty_principal' : 'faculty_instructor_1'] || "/images/faculty-placeholder.svg"}
                           alt={`${faculty.name} placeholder photo`}
                           width={128}
                           height={128}

@@ -121,7 +121,7 @@ export default function FacultyManager() {
         await fetchFaculty()
         setShowImageManager(false)
         setSelectedFacultyForPhoto(null)
-      }
+      } else { throw new Error('Could not update faculty photo') }
     } catch (error) {
       console.error('Error updating faculty photo:', error)
     }
@@ -227,7 +227,7 @@ export default function FacultyManager() {
                             </button>
                             {member.photoUrl && (
                               <button
-                                onClick={() => handlePhotoSelect({ url: '' })}
+                                onClick={async () => { const response = await fetch(`/api/faculty/${member.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ photoUrl: '' }) }); if (response.ok) await fetchFaculty() }}
                                 className="absolute -top-1 -right-1 rounded-full bg-white p-1 text-red-600 shadow hover:bg-red-50"
                                 title="Remove photo"
                               >

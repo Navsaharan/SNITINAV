@@ -4,6 +4,7 @@ import "./globals.css";
 import AuthSessionProvider from "@/components/providers/session-provider";
 import ColorProvider from "@/components/providers/color-provider";
 import LoadingProvider from "@/components/providers/loading-provider";
+import PageViewTracker from "@/components/providers/page-view-tracker";
 import { Toaster } from "@/components/ui/toaster";
 
 const geistSans = Geist({
@@ -41,6 +42,7 @@ export default function RootLayout({
           <ColorProvider>
             <AuthSessionProvider>
               {children}
+              <PageViewTracker />
               <Toaster />
             </AuthSessionProvider>
           </ColorProvider>

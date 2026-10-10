@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const activeOnly = searchParams.get('active') === 'true'
 
-    const where = activeOnly ? { isActive: true } : {}
+    const where = activeOnly || !await getServerSession(authOptions) ? { isActive: true } : {}
 
     const faculty = await prisma.faculty.findMany({
       where,
@@ -91,14 +91,9 @@ export async function PUT(request: NextRequest) {
     }
 
     // Update order for each faculty member
-    const updatePromises = facultyIds.map((id: string, index: number) =>
-      prisma.faculty.update({
-        where: { id },
-        data: { order: index }
-      })
-    )
-
-    await Promise.all(updatePromises)
+    await prisma.$transaction(facultyIds.map((id: string, index: number) =>
+      prisma.faculty.update({ where: { id }, data: { order: index } })
+    ))
 
     revalidatePublicContent()
     return NextResponse.json({ success: true })
