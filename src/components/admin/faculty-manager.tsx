@@ -225,6 +225,15 @@ export default function FacultyManager() {
                             >
                               <Upload className="h-3 w-3" />
                             </button>
+                            {member.photoUrl && (
+                              <button
+                                onClick={() => handlePhotoSelect({ url: '' })}
+                                className="absolute -top-1 -right-1 rounded-full bg-white p-1 text-red-600 shadow hover:bg-red-50"
+                                title="Remove photo"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            )}
                           </div>
                           
                           {/* Info */}

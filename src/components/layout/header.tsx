@@ -101,7 +101,6 @@ const defaultNavigation: MenuItem[] = [
   { title: 'Gallery', href: '/gallery' },
   { title: 'Feedback', href: '/feedback' },
   { title: 'Contact', href: '/contact' },
-  { title: 'Student Portal', href: '/student/login' },
   { title: 'Site Map', href: '/sitemap' },
 ]
 

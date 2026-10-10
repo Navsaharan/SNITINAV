@@ -21,6 +21,7 @@ export interface SecureApiOptions {
   requireAuth?: boolean
   requireAdmin?: boolean
   requireRole?: string
+  requireRoles?: string[]
   validateCSRF?: boolean
   logAudit?: boolean
   sanitizeInput?: boolean
@@ -48,7 +49,7 @@ export function createSecureApi(
       let user = null
 
       // Authentication check
-      if (options.requireAuth || options.requireAdmin) {
+      if (options.requireAuth || options.requireAdmin || options.requireRoles) {
         const authError = await requireAuth(request)
         if (authError) return authError
 
@@ -62,9 +63,10 @@ export function createSecureApi(
         if (adminError) return adminError
       }
 
-      if (options.requireRole && user?.role !== options.requireRole) {
+      const allowedRoles = options.requireRoles || (options.requireRole ? [options.requireRole] : [])
+      if (allowedRoles.length > 0 && !allowedRoles.includes(String(user?.role || '').toUpperCase())) {
         return NextResponse.json(
-          { error: `${options.requireRole} access required` },
+          { error: `${allowedRoles.join(' or ')} access required` },
           { status: 403 }
         )
       }

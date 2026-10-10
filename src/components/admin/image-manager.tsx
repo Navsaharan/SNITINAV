@@ -10,6 +10,7 @@ interface ImageManagerProps {
   category?: string
   multiple?: boolean
   showUpload?: boolean
+  publicOnly?: boolean
 }
 
 interface MediaFile {
@@ -22,6 +23,7 @@ interface MediaFile {
   alt?: string
   caption?: string
   category: string
+  isPublic?: boolean
   tags?: string
   createdAt: string
   createdBy: {
@@ -34,7 +36,8 @@ export default function ImageManager({
   onSelect, 
   category = 'all', 
   multiple = false, 
-  showUpload = true 
+  showUpload = true,
+  publicOnly = false
 }: ImageManagerProps) {
   const [media, setMedia] = useState<MediaFile[]>([])
   const [loading, setLoading] = useState(true)
@@ -84,6 +87,7 @@ export default function ImageManager({
       formData.append('caption', metadata.caption)
       formData.append('category', metadata.category)
       formData.append('tags', metadata.tags)
+      formData.append('isPublic', String(metadata.isPublic && metadata.category === 'GALLERY'))
 
       try {
         const response = await fetch('/api/media', {
@@ -148,7 +152,7 @@ export default function ImageManager({
     const matchesCategory = filterCategory === 'all' || file.category === filterCategory
     const isImage = file.mimeType.startsWith('image/')
     
-    return matchesSearch && matchesCategory && isImage
+    return matchesSearch && matchesCategory && isImage && (!publicOnly || Boolean((file as MediaFile & { isPublic?: boolean }).isPublic))
   })
 
   const formatFileSize = (bytes: number) => {

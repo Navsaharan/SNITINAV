@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { unlink } from 'fs/promises'
 import { join } from 'path'
 import { existsSync } from 'fs'
+import { revalidatePublicContent } from '@/lib/revalidate-public-content'
 
 // GET /api/media/[id] - Get specific media file
 export async function GET(
@@ -51,7 +52,7 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { alt, caption } = body
+    const { alt, caption, isPublic } = body
 
     // Check if media exists
     const existingMedia = await prisma.media.findUnique({
@@ -67,6 +68,9 @@ export async function PUT(
       data: {
         alt: alt || '',
         caption: caption || '',
+        ...(isPublic !== undefined && existingMedia.mimeType.startsWith('image/')
+          ? { isPublic: Boolean(isPublic) }
+          : {}),
       },
       include: {
         createdBy: {
@@ -118,6 +122,7 @@ export async function DELETE(
     await prisma.media.delete({
       where: { id: id }
     })
+    revalidatePublicContent()
 
     return NextResponse.json({ message: 'Media deleted successfully' })
   } catch (error) {

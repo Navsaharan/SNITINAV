@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export async function GET() {
   try {
     // Get all published pages
@@ -20,6 +23,8 @@ export async function GET() {
     const staticPages = [
       { url: '', lastmod: new Date().toISOString(), priority: '1.0' },
       { url: '/contact', lastmod: new Date().toISOString(), priority: '0.8' },
+      { url: '/gallery', lastmod: new Date().toISOString(), priority: '0.8' },
+      { url: '/faculty', lastmod: new Date().toISOString(), priority: '0.8' },
     ]
 
     // Dynamic pages from database

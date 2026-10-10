@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { revalidatePublicContent } from '@/lib/revalidate-public-content'
 
 const facultySchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -64,6 +65,7 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    revalidatePublicContent()
     return NextResponse.json({ faculty }, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -98,6 +100,7 @@ export async function PUT(request: NextRequest) {
 
     await Promise.all(updatePromises)
 
+    revalidatePublicContent()
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error updating faculty order:', error)

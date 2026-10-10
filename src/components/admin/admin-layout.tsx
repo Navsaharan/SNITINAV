@@ -19,9 +19,6 @@ import {
   Lock,
   TestTube,
   Navigation,
-  CreditCard,
-  BarChart3,
-  Database
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -44,16 +41,6 @@ const navigation = [
   { name: 'Media', href: '/admin/media', icon: Image },
   { name: 'Images', href: '/admin/images', icon: ImageIcon },
   { name: 'Faculty', href: '/admin/faculty', icon: Users },
-  {
-    name: 'Payment Management',
-    href: '/admin/payments',
-    icon: CreditCard,
-    submenu: [
-      { name: 'Payment Catalog', href: '/admin/payments/catalog', icon: Database },
-      { name: 'Transactions', href: '/admin/payments/transactions', icon: BarChart3 },
-      { name: 'Gateway Config', href: '/admin/payments/gateways', icon: Settings }
-    ]
-  },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
   { name: 'Colors', href: '/admin/colors', icon: Palette },
   { name: 'Password', href: '/admin/password', icon: Lock },

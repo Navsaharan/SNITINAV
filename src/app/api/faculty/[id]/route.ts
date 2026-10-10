@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { revalidatePublicContent } from '@/lib/revalidate-public-content'
 
 type RouteContext = { params: Promise<{ id: string }> }
 
@@ -71,6 +72,7 @@ export async function PUT(
       }
     })
 
+    revalidatePublicContent()
     return NextResponse.json({ faculty })
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -98,6 +100,7 @@ export async function DELETE(
       where: { id }
     })
 
+    revalidatePublicContent()
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error deleting faculty member:', error)

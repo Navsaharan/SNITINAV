@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { createSecureApi, validators, createSuccessResponse } from '@/lib/secure-api'
+import { revalidatePublicContent } from '@/lib/revalidate-public-content'
 
 
 const createPageSchema = z.object({
@@ -112,6 +113,7 @@ export const POST = createSecureApi(
       }
     })
 
+    revalidatePublicContent(page.slug)
     return NextResponse.json(page, { status: 201 })
   },
   {

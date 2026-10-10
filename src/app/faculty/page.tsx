@@ -89,8 +89,14 @@ export default async function FacultyPage() {
                         />
                       </div>
                     ) : (
-                      <div className="w-32 h-32 bg-gray-200 rounded-full flex items-center justify-center border-4 border-blue-100">
-                        <User className="h-12 w-12 text-gray-400" />
+                      <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-blue-100 bg-blue-50">
+                        <Image
+                          src="/images/faculty-placeholder.svg"
+                          alt={`${faculty.name} placeholder photo`}
+                          width={128}
+                          height={128}
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                     )}
                   </div>

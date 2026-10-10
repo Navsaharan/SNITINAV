@@ -128,11 +128,6 @@ export default function Footer() {
                   Quality Manual
                 </a>
               </li>
-              <li>
-                <Link href="/student/login" className="text-gray-700 hover:text-blue-600 text-sm transition-colors font-medium">
-                  Student Portal
-                </Link>
-              </li>
             </ul>
           </div>
         </div>

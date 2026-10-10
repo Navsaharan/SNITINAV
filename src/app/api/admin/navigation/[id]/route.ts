@@ -12,7 +12,7 @@ export const GET = buildSafeApiRoute(async (
 ) => {
   // Check authentication
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== 'ADMIN') {
+  if (!session || !['ADMIN', 'EDITOR'].includes(String(session.user?.role).toUpperCase())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -55,7 +55,7 @@ export const PUT = buildSafeApiRoute(async (
 ) => {
   // Check authentication
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== 'ADMIN') {
+  if (!session || !['ADMIN', 'EDITOR'].includes(String(session.user?.role).toUpperCase())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -137,7 +137,7 @@ export const DELETE = buildSafeApiRoute(async (
 ) => {
   // Check authentication
   const session = await getServerSession(authOptions)
-  if (!session || session.user?.role !== 'ADMIN') {
+  if (!session || !['ADMIN', 'EDITOR'].includes(String(session.user?.role).toUpperCase())) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

@@ -111,6 +111,7 @@ model Media {
   alt         String?
   caption     String?
   category    MediaCategory @default(GENERAL)
+  isPublic    Boolean       @default(false)
   tags        String?      // Comma-separated tags
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { createClient } from '@supabase/supabase-js'
 import { randomUUID } from 'crypto'
+import { revalidatePublicContent } from '@/lib/revalidate-public-content'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
@@ -144,6 +145,7 @@ export async function POST(request: NextRequest) {
     const caption = String(formData.get('caption') || '')
     const category = String(formData.get('category') || 'GENERAL')
     const tags = String(formData.get('tags') || '')
+    const isPublic = file?.type.startsWith('image/') && formData.get('isPublic') === 'true'
 
     if (!file) {
       return NextResponse.json(
@@ -223,6 +225,7 @@ export async function POST(request: NextRequest) {
         alt,
         caption,
         category: category as any,
+        isPublic,
         tags,
         createdById: (session as any).user.id,
       },
@@ -232,6 +235,8 @@ export async function POST(request: NextRequest) {
         },
       },
     })
+
+    revalidatePublicContent()
 
     // Return a temporary URL for PDFs, while keeping their stored reference private.
     if (isPdf) {

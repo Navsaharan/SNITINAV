@@ -19,18 +19,25 @@ interface PageProps {
 export async function generateStaticParams(): Promise<
   Array<{ slug: string }>
 > {
-  const pages = await prisma.page.findMany({
-    where: {
-      status: 'PUBLISHED',
-    },
-    select: {
-      slug: true,
-    },
-  })
+  if (!prisma) return []
 
-  return pages.map((page: { slug: string }) => ({
-    slug: page.slug,
-  }))
+  try {
+    const pages = await prisma.page.findMany({
+      where: {
+        status: 'PUBLISHED',
+      },
+      select: {
+        slug: true,
+      },
+    })
+
+    return pages.map((page: { slug: string }) => ({
+      slug: page.slug,
+    }))
+  } catch (error) {
+    console.warn('Skipping dynamic page pre-generation:', error)
+    return []
+  }
 }
 
 // Generate SEO metadata

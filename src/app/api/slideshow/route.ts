@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
     let slideshowImages: Array<{ id: string; url: string; alt: string; caption: string | null }> = []
     if (imageIds.length > 0) {
       const mediaFiles = await prisma.media.findMany({
-        where: { id: { in: imageIds } },
+        where: { id: { in: imageIds }, mimeType: { startsWith: 'image/' }, isPublic: true },
         select: { id: true, url: true, alt: true, originalName: true, caption: true }
       })
       const mediaById = new Map<string, SlideshowMediaRow>(
@@ -47,23 +47,6 @@ export async function GET(request: NextRequest) {
           caption: media.caption
         }] : []
       })
-    }
-
-    // A migrated database may have media but no slideshow setting. Prefer its
-    // real image records over the legacy hard-coded sample images in that case.
-    if (slideshowImages.length === 0) {
-      const mediaFiles = await prisma.media.findMany({
-        where: { mimeType: { startsWith: 'image/' } },
-        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
-        take: 10,
-        select: { id: true, url: true, alt: true, originalName: true, caption: true }
-      })
-      slideshowImages = mediaFiles.map((media: SlideshowMediaRow) => ({
-        id: media.id,
-        url: media.url,
-        alt: media.alt || media.originalName || 'Slideshow image',
-        caption: media.caption
-      }))
     }
 
     // If no slideshow images configured, return default images
@@ -140,7 +123,9 @@ export async function PUT(request: NextRequest) {
       where: {
         id: {
           in: imageIds
-        }
+        },
+        mimeType: { startsWith: 'image/' },
+        isPublic: true
       }
     })
 

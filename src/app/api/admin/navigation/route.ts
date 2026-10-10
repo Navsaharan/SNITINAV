@@ -43,7 +43,7 @@ export const GET = createSecureApi(
       })
     }
   },
-  { requireAuth: true, requireRole: 'EDITOR' }
+  { requireRoles: ['ADMIN', 'EDITOR'] }
 )
 
 // POST /api/admin/navigation - Create new navigation item
@@ -88,7 +88,7 @@ export const POST = createSecureApi(
 
     return NextResponse.json(navigationItem, { status: 201 })
   },
-  { requireAuth: true, requireRole: 'EDITOR' }
+  { requireRoles: ['ADMIN', 'EDITOR'] }
 )
 
 // PUT /api/admin/navigation - Bulk update navigation order
@@ -142,5 +142,5 @@ export const PUT = createSecureApi(
 
     return NextResponse.json({ navigation: navigationItems })
   },
-  { requireAdmin: true }
+  { requireRoles: ['ADMIN', 'EDITOR'] }
 )

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { revalidatePublicContent } from '@/lib/revalidate-public-content'
 
 
 const updatePageSchema = z.object({
@@ -122,6 +123,8 @@ export async function PUT(
       }
     })
 
+    revalidatePublicContent(page.slug)
+    if (existingPage.slug !== page.slug) revalidatePublicContent(existingPage.slug)
     return NextResponse.json(page)
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -171,6 +174,7 @@ export async function DELETE(
     await prisma.page.delete({
       where: { id: id }
     })
+    revalidatePublicContent(existingPage.slug)
 
     return NextResponse.json({ message: 'Page deleted successfully' })
   } catch (error) {

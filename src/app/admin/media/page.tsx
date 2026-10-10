@@ -17,6 +17,7 @@ interface MediaFile {
   url: string
   alt?: string
   caption?: string
+  isPublic?: boolean
   createdAt: string
   createdBy: {
     name?: string
@@ -74,7 +75,7 @@ export default function MediaManagement() {
     }
   }
 
-  const handleUpload = async (files: File[], metadata: { category: string; tags: string; alt: string; caption: string }) => {
+  const handleUpload = async (files: File[], metadata: { category: string; tags: string; alt: string; caption: string; isPublic: boolean }) => {
     for (const file of files) {
       const formData = new FormData()
       formData.append('file', file)
@@ -82,6 +83,7 @@ export default function MediaManagement() {
       formData.append('caption', metadata.caption)
       formData.append('category', metadata.category)
       formData.append('tags', metadata.tags)
+      formData.append('isPublic', String(metadata.isPublic && metadata.category === 'GALLERY'))
 
       try {
         const response = await fetch('/api/media', {

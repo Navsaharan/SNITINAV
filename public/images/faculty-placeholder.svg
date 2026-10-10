@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title">
+  <title>Faculty photo placeholder</title>
+  <rect width="160" height="160" rx="80" fill="#dbeafe"/>
+  <circle cx="80" cy="62" r="28" fill="#60a5fa"/>
+  <path d="M32 142c7-29 25-44 48-44s41 15 48 44" fill="#60a5fa"/>
+</svg>

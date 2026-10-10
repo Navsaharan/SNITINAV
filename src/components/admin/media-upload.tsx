@@ -5,7 +5,7 @@ import { useDropzone } from 'react-dropzone'
 import { Upload, X, File, Image as ImageIcon } from 'lucide-react'
 
 interface MediaUploadProps {
-  onUpload: (files: File[], metadata: { category: string; tags: string; alt: string; caption: string }) => void
+  onUpload: (files: File[], metadata: { category: string; tags: string; alt: string; caption: string; isPublic: boolean }) => void
   onClose: () => void
   acceptedTypes?: string[]
   maxSize?: number
@@ -25,6 +25,7 @@ export default function MediaUpload({
   const [tags, setTags] = useState('')
   const [alt, setAlt] = useState('')
   const [caption, setCaption] = useState('')
+  const [isPublic, setIsPublic] = useState(false)
 
   const categories = [
     { value: 'GENERAL', label: 'General' },
@@ -60,12 +61,13 @@ export default function MediaUpload({
 
     setUploading(true)
     try {
-      await onUpload(selectedFiles, { category, tags, alt, caption })
+      await onUpload(selectedFiles, { category, tags, alt, caption, isPublic })
       setSelectedFiles([])
       setCategory('GENERAL')
       setTags('')
       setAlt('')
       setCaption('')
+      setIsPublic(false)
       onClose()
     } catch (error) {
       console.error('Upload failed:', error)
@@ -190,6 +192,19 @@ export default function MediaUpload({
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
+
+              <label className="md:col-span-2 flex items-start gap-3 rounded-md border border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
+                <input
+                  type="checkbox"
+                  checked={isPublic}
+                  onChange={(e) => setIsPublic(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span>
+                  <strong className="block text-gray-900">Publish in public gallery</strong>
+                  <span>Uploads are private by default and are never added to the homepage slideshow automatically.</span>
+                </span>
+              </label>
             </div>
           </div>
         )}

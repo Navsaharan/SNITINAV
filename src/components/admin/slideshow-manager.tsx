@@ -222,9 +222,10 @@ export default function SlideshowManager() {
             <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
               <ImageManager
                 onSelect={handleImageSelect}
-                category="gallery"
+                category="GALLERY"
                 multiple={false}
                 showUpload={true}
+                publicOnly={true}
               />
             </div>
           </div>

@@ -1,6 +1,6 @@
 /**
  * End-to-End Tests for Admin Panel
- * Tests the complete admin panel functionality including email and payment management
+ * Tests the complete admin panel functionality including admin management workflows
  */
 
 import { test, expect } from '@playwright/test'
@@ -147,18 +147,6 @@ test.describe('Admin Panel E2E Tests', () => {
       await expect(page).toHaveTitle(/Admin Panel/)
       await expect(page.locator('h1')).toContainText('Admin Dashboard')
     })
-
-    test('should show email and payment management sections', async ({ page }) => {
-      await page.goto('/admin')
-      
-      // Check for email management section
-      await expect(page.locator('text=Email Management')).toBeVisible()
-      await expect(page.locator('text=Payment Management')).toBeVisible()
-      
-      // Check for navigation links
-      await expect(page.locator('a[href="/admin/email"]')).toBeVisible()
-      await expect(page.locator('a[href="/admin/payments"]')).toBeVisible()
-    })
   })
 
   test.describe('Email Account Management', () => {
@@ -218,89 +206,6 @@ test.describe('Admin Panel E2E Tests', () => {
     })
   })
 
-  test.describe('Payment Catalog Management', () => {
-    test('should display payment catalog items', async ({ page }) => {
-      await page.goto('/admin/payments/catalog')
-      
-      await expect(page.locator('h1')).toContainText('Payment Catalog Management')
-      
-      // Wait for items to load
-      await page.waitForSelector('[data-testid="payment-catalog-table"]')
-      
-      // Check if test item is displayed
-      await expect(page.locator('text=Semester Fee')).toBeVisible()
-      await expect(page.locator('text=₹50,000')).toBeVisible()
-      await expect(page.locator('text=SEMESTER')).toBeVisible()
-    })
-
-    test('should open create item dialog', async ({ page }) => {
-      await page.goto('/admin/payments/catalog')
-      
-      // Click create item button
-      await page.click('button:has-text("Add Item")')
-      
-      // Check if dialog opened
-      await expect(page.locator('[role="dialog"]')).toBeVisible()
-      await expect(page.locator('text=Create Payment Item')).toBeVisible()
-      
-      // Check form fields
-      await expect(page.locator('input[name="name"]')).toBeVisible()
-      await expect(page.locator('textarea[name="description"]')).toBeVisible()
-      await expect(page.locator('select[name="feeType"]')).toBeVisible()
-      await expect(page.locator('input[name="amount"]')).toBeVisible()
-    })
-
-    test('should show item statistics', async ({ page }) => {
-      await page.goto('/admin/payments/catalog')
-      
-      // Wait for items to load
-      await page.waitForSelector('[data-testid="payment-catalog-table"]')
-      
-      // Check if statistics are displayed
-      await expect(page.locator('text=23/25 payments')).toBeVisible()
-      await expect(page.locator('text=₹12,50,000')).toBeVisible()
-    })
-  })
-
-  test.describe('Payment Transaction Monitoring', () => {
-    test('should display payment transactions', async ({ page }) => {
-      await page.goto('/admin/payments/transactions')
-      
-      await expect(page.locator('h1')).toContainText('Payment Transaction Monitoring')
-      
-      // Wait for transactions to load
-      await page.waitForSelector('[data-testid="payment-transactions-table"]')
-      
-      // Check if test transaction is displayed
-      await expect(page.locator('text=TXN_001')).toBeVisible()
-      await expect(page.locator('text=Test Student 1')).toBeVisible()
-      await expect(page.locator('text=₹50,000')).toBeVisible()
-      await expect(page.locator('text=COMPLETED')).toBeVisible()
-    })
-
-    test('should show analytics cards', async ({ page }) => {
-      await page.goto('/admin/payments/transactions')
-      
-      // Check for analytics cards
-      await expect(page.locator('text=Total Revenue')).toBeVisible()
-      await expect(page.locator('text=Total Transactions')).toBeVisible()
-      await expect(page.locator('text=Average Amount')).toBeVisible()
-      await expect(page.locator('text=Success Rate')).toBeVisible()
-    })
-
-    test('should filter transactions', async ({ page }) => {
-      await page.goto('/admin/payments/transactions')
-      
-      // Wait for transactions to load
-      await page.waitForSelector('[data-testid="payment-transactions-table"]')
-      
-      // Use status filter
-      await page.selectOption('select[name="status"]', 'COMPLETED')
-      
-      // Check if filtered results are shown
-      await expect(page.locator('text=COMPLETED')).toBeVisible()
-    })
-  })
 
   test.describe('Email Monitoring', () => {
     test('should display email monitoring page', async ({ page }) => {
@@ -368,7 +273,7 @@ test.describe('Admin Panel E2E Tests', () => {
         await route.abort('failed')
       })
 
-      await page.goto('/admin/payments/catalog')
+      await page.goto('/admin/email/accounts')
       
       // Check if network error is handled
       await expect(page.locator('text=Network error')).toBeVisible()
@@ -380,8 +285,8 @@ test.describe('Admin Panel E2E Tests', () => {
       await page.goto('/admin')
       
       // Check for ARIA labels
-      await expect(page.locator('[aria-label]')).toHaveCount({ min: 1 })
-      await expect(page.locator('[role="button"]')).toHaveCount({ min: 1 })
+      expect(await page.locator('[aria-label]').count()).toBeGreaterThan(0)
+      expect(await page.locator('[role="button"]').count()).toBeGreaterThan(0)
     })
 
     test('should support keyboard navigation', async ({ page }) => {

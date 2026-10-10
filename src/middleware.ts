@@ -53,23 +53,7 @@ export default withAuth(
           }
           // For other admin routes, require authentication and admin role
           console.log("Middleware auth check - token:", !!token, "role:", token?.role, "userType:", token?.userType)
-          return !!token && (token.role === 'ADMIN' || token.userType === 'ADMIN')
-        }
-
-        // Check if user is trying to access student routes
-        if (pathname.startsWith('/student')) {
-          // Allow access to login and public pages without authentication
-          if (pathname === '/student/login' || pathname === '/student/forgot-password') {
-            return true
-          }
-          // For other student routes, require authentication and student role
-          console.log("Middleware student auth check - token:", !!token, "role:", token?.role, "userType:", token?.userType)
-          return !!token && (
-            token.userType === 'STUDENT' ||
-            token.role === 'STUDENT' ||
-            token.role === 'FACULTY' ||
-            token.role === 'STAFF'
-          )
+          return !!token && ['ADMIN', 'EDITOR'].includes(String(token.role || '').toUpperCase())
         }
 
         // Allow access to all other routes
@@ -82,9 +66,7 @@ export default withAuth(
 export const config = {
   matcher: [
     '/admin/:path*',
-    '/student/:path*',
     '/api/admin/:path*',
-    '/api/student/:path*',
     '/api/contact/:path*',
   ]
 }

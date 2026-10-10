@@ -36,6 +36,8 @@ export default async function GalleryPage() {
         mimeType: {
           startsWith: 'image/',
         },
+        category: 'GALLERY',
+        isPublic: true,
       },
       orderBy: {
         createdAt: 'desc',
