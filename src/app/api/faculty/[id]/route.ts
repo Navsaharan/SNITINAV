@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { revalidatePublicContent } from '@/lib/revalidate-public-content'
 
 type RouteContext = { params: Promise<{ id: string }> }
+const publicImageUrlSchema = z.string().max(2048).refine((value) => !value || /^https?:\/\/[^\s]+$/i.test(value) || (value.startsWith('/') && !value.startsWith('//')), 'Photo URL must be HTTP(S) or a same-site path')
 
 const facultyUpdateSchema = z.object({
   name: z.string().min(1, 'Name is required').optional(),
@@ -13,7 +14,7 @@ const facultyUpdateSchema = z.object({
   department: z.string().optional(),
   email: z.string().email().optional().or(z.literal('')),
   phone: z.string().optional(),
-  photoUrl: z.string().optional(),
+  photoUrl: publicImageUrlSchema.optional(),
   bio: z.string().optional(),
   order: z.number().optional(),
   isActive: z.boolean().optional(),
@@ -26,9 +27,9 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-
-    const faculty = await prisma.faculty.findUnique({
-      where: { id }
+    const session = await getServerSession(authOptions)
+    const faculty = await prisma.faculty.findFirst({
+      where: { id, ...((session as any)?.user?.role === 'ADMIN' ? {} : { isActive: true }) }
     })
 
     if (!faculty) {
@@ -49,7 +50,7 @@ export async function PUT(
 ) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session) {
+    if (!session || (session as any).user?.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -90,7 +91,7 @@ export async function DELETE(
 ) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session) {
+    if (!session || (session as any).user?.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

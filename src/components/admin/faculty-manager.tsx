@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
-import { Plus, Edit, Trash2, GripVertical, User, Upload, X } from 'lucide-react'
+import { Plus, Edit, Trash2, GripVertical, User, Upload, X, Images } from 'lucide-react'
 import Image from 'next/image'
 import ImageManager from './image-manager'
 
@@ -26,6 +26,8 @@ export default function FacultyManager() {
   const [showForm, setShowForm] = useState(false)
   const [showImageManager, setShowImageManager] = useState(false)
   const [selectedFacultyForPhoto, setSelectedFacultyForPhoto] = useState<string | null>(null)
+  const [uploadingPhotoFor, setUploadingPhotoFor] = useState<string | null>(null)
+  const [photoUploadError, setPhotoUploadError] = useState('')
 
   useEffect(() => {
     fetchFaculty()
@@ -127,6 +129,38 @@ export default function FacultyManager() {
     }
   }
 
+  const handleDirectPhotoUpload = async (member: Faculty, file?: File) => {
+    if (!file) return
+    setUploadingPhotoFor(member.id)
+    setPhotoUploadError('')
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('category', 'FACULTY')
+      formData.append('alt', `${member.name} faculty photo`)
+      formData.append('caption', member.name)
+      formData.append('isPublic', 'true')
+      const uploadResponse = await fetch('/api/media', { method: 'POST', body: formData })
+      const media = await uploadResponse.json()
+      if (!uploadResponse.ok || typeof media.url !== 'string' || !media.url) {
+        throw new Error(media.error || 'Photo upload failed')
+      }
+      const saveResponse = await fetch(`/api/faculty/${member.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photoUrl: media.url }),
+      })
+      if (!saveResponse.ok) {
+        throw new Error('The image uploaded, but could not be assigned to this faculty member')
+      }
+      await fetchFaculty()
+    } catch (error) {
+      setPhotoUploadError(error instanceof Error ? error.message : 'Photo upload failed')
+    } finally {
+      setUploadingPhotoFor(null)
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -159,6 +193,7 @@ export default function FacultyManager() {
       </div>
 
       <div className="p-6">
+        {photoUploadError && <p role="alert" className="mb-4 text-sm text-red-700">{photoUploadError}</p>}
         {faculty.length === 0 ? (
           <div className="text-center py-12">
             <User className="mx-auto h-12 w-12 text-gray-400 mb-4" />
@@ -215,15 +250,36 @@ export default function FacultyManager() {
                                 <User className="h-8 w-8 text-gray-400" />
                               )}
                             </div>
+                            <label
+                              htmlFor={`faculty-photo-upload-${member.id}`}
+                              aria-label={`Upload a photo for ${member.name}`}
+                              title={uploadingPhotoFor === member.id ? 'Uploading photo…' : 'Upload photo'}
+                              className={`absolute -bottom-1 -right-1 bg-blue-600 text-white rounded-full p-1 hover:bg-blue-700 cursor-pointer ${uploadingPhotoFor === member.id ? 'opacity-60 pointer-events-none' : ''}`}
+                            >
+                              <Upload className="h-3 w-3" />
+                            </label>
+                            <input
+                              id={`faculty-photo-upload-${member.id}`}
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp,image/gif"
+                              className="sr-only"
+                              disabled={uploadingPhotoFor === member.id}
+                              onChange={(event) => {
+                                void handleDirectPhotoUpload(member, event.target.files?.[0])
+                                event.currentTarget.value = ''
+                              }}
+                            />
                             <button
+                              type="button"
                               onClick={() => {
                                 setSelectedFacultyForPhoto(member.id)
                                 setShowImageManager(true)
                               }}
-                              className="absolute -bottom-1 -right-1 bg-blue-600 text-white rounded-full p-1 hover:bg-blue-700"
-                              title="Upload Photo"
+                              className="absolute -bottom-1 left-0 bg-white text-blue-700 border rounded-full p-1 hover:bg-blue-50"
+                              title="Choose from media library"
+                              aria-label={`Choose an existing image for ${member.name}`}
                             >
-                              <Upload className="h-3 w-3" />
+                              <Images className="h-3 w-3" />
                             </button>
                             {member.photoUrl && (
                               <button

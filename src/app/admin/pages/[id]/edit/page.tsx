@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import AdminLayout from '@/components/admin/admin-layout'
 import RichTextEditor from '@/components/admin/rich-text-editor'
+import ContentRenderer from '@/components/content/content-renderer'
 import { Eye, Save, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
@@ -64,6 +65,19 @@ export default function EditPage() {
   })
 
   const watchedValues = watch()
+
+  const persistPageContent = useCallback(async (nextContent: string) => {
+    const response = await fetch(`/api/pages/${pageId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: nextContent }),
+    })
+    if (!response.ok) {
+      const result = await response.json()
+      throw new Error(result.error || 'Could not save page content')
+    }
+    setContent(nextContent)
+  }, [pageId])
 
   const fetchPage = useCallback(async () => {
     try {
@@ -357,6 +371,11 @@ export default function EditPage() {
               <RichTextEditor
                 content={content}
                 onChange={setContent}
+                pageId={pageId}
+                pageTitle={watchedValues.title || page.title}
+                pageSlug={watchedValues.slug || page.slug}
+                publish={watchedValues.status === 'PUBLISHED'}
+                onPersist={persistPageContent}
                 placeholder="Start writing your page content..."
                 showPreview={true}
                 splitView={true}
@@ -377,10 +396,7 @@ export default function EditPage() {
                   {watchedValues.description && (
                     <p className="text-gray-600 mb-6">{watchedValues.description}</p>
                   )}
-                  <div 
-                    className="prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: content || '<p>No content yet...</p>' }}
-                  />
+                  {content ? <ContentRenderer content={content} /> : <p className="text-sm text-gray-500">No content yet...</p>}
                 </div>
               </div>
             </div>

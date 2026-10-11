@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { Download, ExternalLink } from 'lucide-react'
+import { Render as PuckRender } from '@puckeditor/core'
+import { parsePuckPageContent, parseStoryblokPageReference, PUCK_PAGE_PREFIX } from '@/lib/page-editor-content'
+import { pageBuilderConfig } from '@/lib/puck-page-config'
 import FeedbackForm from '@/components/forms/feedback-form'
 
 interface ContentRendererProps {
@@ -62,6 +65,18 @@ export default function ContentRenderer({ content, type = 'HTML', data }: Conten
 
   // Initialize slideshow state for all components to avoid conditional hooks
   const [currentSlide, setCurrentSlide] = useState(0)
+
+  const puckData = parsePuckPageContent(content)
+  if (puckData) {
+    return <div className="prose prose-lg max-w-none"><PuckRender config={pageBuilderConfig} data={puckData as never} /></div>
+  }
+  const storyblokSlug = parseStoryblokPageReference(content)
+  if (storyblokSlug) {
+    return <p className="rounded border border-sky-200 bg-sky-50 p-3 text-sm text-sky-900">This page body is managed in Storyblok ({storyblokSlug}). The public page renders its published Storyblok version.</p>
+  }
+  if (content.startsWith(PUCK_PAGE_PREFIX)) {
+    return <p role="status" className="text-sm text-amber-800">This page uses an unsupported or damaged page-builder format. Please open it in the page editor and save it again.</p>
+  }
 
   switch (type) {
     case 'TEXT':

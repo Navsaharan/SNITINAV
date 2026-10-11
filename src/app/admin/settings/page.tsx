@@ -203,12 +203,16 @@ export default function AdminSettings() {
               <h3 className="text-lg font-medium text-gray-900 mb-6">General Settings</h3>
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Preferred rich text editor</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Default page editor</label>
                   <select value={settings.preferred_rich_text_editor} onChange={(e) => handleInputChange('preferred_rich_text_editor', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="tiptap">TipTap — full-featured formatting and tables</option>
                     <option value="ckeditor">CKEditor 5 — familiar toolbar and structured editing</option>
+                    <option value="puck">Puck — drag-and-drop page builder</option>
+                    <option value="tina">TinaCMS — CMS form editor</option>
+                    <option value="storyblok">Storyblok — connected headless CMS</option>
                   </select>
-                  <p className="text-xs text-gray-500 mt-1">Applies to page content editors. Existing page content remains stored as HTML.</p>
+                  <p className="mt-2 text-xs text-gray-500">Admins can change the editor for each edit session. TipTap, CKEditor, Puck, and TinaCMS use the current Page model; Storyblok requires server-side Storyblok credentials.</p>
+                  <p className="text-xs text-gray-500 mt-1">Legacy HTML stays intact. Puck stores a versioned builder document in the same page field; Storyblok stores only a story reference there.</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">

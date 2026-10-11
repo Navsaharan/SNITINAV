@@ -5,13 +5,15 @@ import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { revalidatePublicContent } from '@/lib/revalidate-public-content'
 
+const publicImageUrlSchema = z.string().max(2048).refine((value) => !value || /^https?:\/\/[^\s]+$/i.test(value) || (value.startsWith('/') && !value.startsWith('//')), 'Photo URL must be HTTP(S) or a same-site path')
+
 const facultySchema = z.object({
   name: z.string().min(1, 'Name is required'),
   designation: z.string().min(1, 'Designation is required'),
   department: z.string().optional(),
   email: z.string().email().optional().or(z.literal('')),
   phone: z.string().optional(),
-  photoUrl: z.string().optional(),
+  photoUrl: publicImageUrlSchema.optional(),
   bio: z.string().optional(),
   order: z.number().optional(),
   isActive: z.boolean().optional(),
@@ -22,8 +24,8 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const activeOnly = searchParams.get('active') === 'true'
-
-    const where = activeOnly || !await getServerSession(authOptions) ? { isActive: true } : {}
+    const session = await getServerSession(authOptions)
+    const where = activeOnly || (session as any)?.user?.role !== 'ADMIN' ? { isActive: true } : {}
 
     const faculty = await prisma.faculty.findMany({
       where,
@@ -44,7 +46,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session) {
+    if (!session || (session as any).user?.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -80,7 +82,7 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session) {
+    if (!session || (session as any).user?.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

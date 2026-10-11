@@ -6,6 +6,8 @@ import MainLayout from '@/components/layout/main-layout'
 import ContentRenderer from '@/components/content/content-renderer'
 import Breadcrumbs from '@/components/ui/breadcrumbs'
 import PageSidebar from '@/components/page/page-sidebar'
+import { parseStoryblokPageReference } from '@/lib/page-editor-content'
+import { getPublishedStoryblokPage } from '@/lib/storyblok-pages'
 
 export const revalidate = 60
 
@@ -127,6 +129,17 @@ export default async function DynamicPage({ params }: PageProps) {
     notFound()
   }
 
+  let renderedPageContent = page.content || ''
+  const storyblokSlug = parseStoryblokPageReference(page.content)
+  if (storyblokSlug) {
+    try {
+      renderedPageContent = await getPublishedStoryblokPage(storyblokSlug) || '<p>Page content is temporarily unavailable.</p>'
+    } catch (error) {
+      console.error('Could not load published Storyblok page:', error instanceof Error ? error.message : 'unknown error')
+      renderedPageContent = '<p>Page content is temporarily unavailable.</p>'
+    }
+  }
+
   const breadcrumbs: Array<{ label: string; href: string }> = []
 
   if (page.parent) {
@@ -167,12 +180,12 @@ export default async function DynamicPage({ params }: PageProps) {
 
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             <div className="lg:col-span-3">
-              {page.content && (
+              {renderedPageContent && (
                 <div
                   className="prose prose-lg max-w-none mb-8"
                   style={{ color: 'var(--color-text-primary)' }}
                 >
-                  <ContentRenderer content={page.content} />
+                  <ContentRenderer content={renderedPageContent} />
                 </div>
               )}
 

@@ -21,9 +21,9 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!session || (session as any).user?.role !== 'ADMIN') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const { key, imageUrl, imageId } = await request.json()
-    if (typeof key !== 'string' || !/^[a-z0-9_]+$/.test(key) || typeof imageUrl !== 'string' || !imageUrl) {
+    if (typeof key !== 'string' || !/^[a-z0-9_]+$/.test(key) || typeof imageUrl !== 'string' || imageUrl.length > 2048 || !(/^(https?:\/\/[^\s]+)$/i.test(imageUrl) || (imageUrl.startsWith('/') && !imageUrl.startsWith('//')))) {
       return NextResponse.json({ error: 'A valid key and imageUrl are required' }, { status: 400 })
     }
     const timestamp = new Date().toISOString()
@@ -43,7 +43,7 @@ export async function PUT(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!session || (session as any).user?.role !== 'ADMIN') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     const key = new URL(request.url).searchParams.get('key')
     if (!key || !/^[a-z0-9_]+$/.test(key)) return NextResponse.json({ error: 'A valid key is required' }, { status: 400 })
     await prisma.setting.deleteMany({ where: { key: `placeholder_${key}` } })

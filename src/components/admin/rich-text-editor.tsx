@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { EditorContent, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Image from '@tiptap/extension-image'
@@ -18,6 +19,13 @@ import {
   Underline as UnderlineIcon, Undo2
 } from 'lucide-react'
 import '@/styles/rich-text-editor.css'
+import 'ckeditor5/ckeditor5.css'
+import StoryblokEditorAdapter from './storyblok-editor-adapter'
+import { parseStoryblokPageReference, puckPageContentToHtml } from '@/lib/page-editor-content'
+
+const PuckEditorAdapter = dynamic(() => import('./puck-editor-adapter'), { ssr: false })
+const TinaCmsAdapter = dynamic(() => import('./tina-cms-adapter'), { ssr: false })
+type EditorMode = 'tiptap' | 'ckeditor' | 'puck' | 'tina' | 'storyblok'
 
 interface RichTextEditorProps {
   content: string
@@ -26,16 +34,55 @@ interface RichTextEditorProps {
   showPreview?: boolean
   splitView?: boolean
   className?: string
+  pageId?: string
+  pageTitle?: string
+  pageSlug?: string
+  publish?: boolean
+  onPersist?: (content: string) => Promise<void>
 }
 
 function ToolbarButton({ label, active, onClick, children }: { label: string; active?: boolean; onClick: () => void; children: React.ReactNode }) {
   return <button type="button" title={label} aria-label={label} onClick={onClick} className={`editor-toolbar-button${active ? ' is-active' : ''}`}>{children}</button>
 }
 
-export default function RichTextEditor({ content, onChange, placeholder = 'Start writing…', showPreview = false, splitView = false, className = '' }: RichTextEditorProps) {
+export default function RichTextEditor({ content, onChange, placeholder = 'Start writing…', showPreview = false, splitView = false, className = '', pageId, pageTitle = '', pageSlug = '', publish = false, onPersist }: RichTextEditorProps) {
   const [preview, setPreview] = useState(showPreview || splitView)
-  const [preferredEditor, setPreferredEditor] = useState<'tiptap' | 'ckeditor'>('tiptap')
-  useEffect(() => { fetch('/api/settings/public').then(r => r.ok ? r.json() : {}).then((data: Record<string, { value?: string }>) => { const choice = data.preferred_rich_text_editor?.value; if (choice === 'ckeditor' || choice === 'tiptap') setPreferredEditor(choice) }).catch(() => {}) }, [])
+  const [selectedEditor, setSelectedEditor] = useState<EditorMode>('tiptap')
+  const [resolvedContent, setResolvedContent] = useState(content)
+  const [sourceLoading, setSourceLoading] = useState(false)
+  const [sourceError, setSourceError] = useState('')
+  const storyblokSourceSlug = parseStoryblokPageReference(content)
+  useEffect(() => {
+    fetch('/api/settings/public').then(r => r.ok ? r.json() : {}).then((data: Record<string, { value?: string }>) => {
+      const choice = data.preferred_rich_text_editor?.value
+      if (choice === 'ckeditor' || choice === 'tiptap' || choice === 'puck' || choice === 'tina' || choice === 'storyblok') setSelectedEditor(choice)
+    }).catch(() => {})
+  }, [])
+  useEffect(() => {
+    if (!storyblokSourceSlug || selectedEditor === 'storyblok') {
+      setResolvedContent(content)
+      setSourceLoading(false)
+      setSourceError('')
+      return
+    }
+    let active = true
+    setSourceLoading(true)
+    setSourceError('')
+    fetch(`/api/cms/storyblok?slug=${encodeURIComponent(storyblokSourceSlug)}`).then(async (response) => {
+      const result = await response.json()
+      if (!response.ok || !result.story) throw new Error(result.error || 'Could not read the Storyblok-backed page')
+      if (active) setResolvedContent(result.story.content || '')
+    }).catch((reason) => {
+      if (active) setSourceError(reason instanceof Error ? reason.message : 'Could not read Storyblok content')
+    }).finally(() => { if (active) setSourceLoading(false) })
+    return () => { active = false }
+  }, [content, selectedEditor, storyblokSourceSlug])
+  const puckSourceHtml = puckPageContentToHtml(content)
+  const editorContent = storyblokSourceSlug && selectedEditor !== 'storyblok'
+    ? resolvedContent
+    : puckSourceHtml !== null && selectedEditor !== 'puck'
+      ? puckSourceHtml
+      : content
   const extensions = useMemo(() => [
     StarterKit.configure({ codeBlock: { HTMLAttributes: { class: 'editor-code-block' } } }),
     Underline,
@@ -49,17 +96,36 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Start
   const editor = useEditor({
     immediatelyRender: false,
     extensions,
-    content,
+    content: editorContent,
     editorProps: { attributes: { class: 'editor-prose' } },
     onUpdate: ({ editor: current }) => onChange(current.getHTML()),
   })
 
   useEffect(() => {
-    if (editor && content !== editor.getHTML()) editor.commands.setContent(content || '', false)
-  }, [content, editor])
+    if (editor && editorContent !== editor.getHTML()) editor.commands.setContent(editorContent || '', false)
+  }, [editorContent, editor])
 
-  if (preferredEditor === 'ckeditor') return <CkEditorAdapter content={content} onChange={onChange} className={className} placeholder={placeholder} />
-  if (!editor) return <div className={`rich-text-editor ${className}`}><div className="editor-loading">Loading editor…</div></div>
+  const chooser = (
+    <div className="mb-4 flex flex-wrap items-center gap-3 rounded-md border border-gray-200 bg-gray-50 p-3">
+      <label htmlFor="page-editor-choice" className="text-sm font-medium text-gray-800">Choose editor for this edit</label>
+      <select id="page-editor-choice" value={selectedEditor} onChange={(event) => setSelectedEditor(event.target.value as EditorMode)} className="rounded border border-gray-300 bg-white px-3 py-2 text-sm">
+        <option value="tiptap">TipTap — rich text</option>
+        <option value="ckeditor">CKEditor 5 — rich text</option>
+        <option value="puck">Puck — visual page builder</option>
+        <option value="tina">TinaCMS — CMS form editor</option>
+        <option value="storyblok">Storyblok — connected headless CMS</option>
+      </select>
+      <span className="text-xs text-gray-600">The selection is per editing session; existing HTML remains available in the rich-text editors.</span>
+    </div>
+  )
+
+  if (storyblokSourceSlug && selectedEditor !== 'storyblok' && sourceLoading) return <div className={className}>{chooser}<div role="status" className="rounded border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900">Loading the current Storyblok body before switching editors…</div></div>
+  if (storyblokSourceSlug && selectedEditor !== 'storyblok' && sourceError) return <div className={className}>{chooser}<div role="alert" className="rounded border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">Could not load this Storyblok page for local editing: {sourceError}. The Storyblok reference has not been changed. Configure the Storyblok server tokens or switch back to Storyblok mode.</div></div>
+  if (selectedEditor === 'puck') return <div className={className}>{chooser}<PuckEditorAdapter key={pageId || 'new-page'} content={editorContent} onChange={onChange} onPersist={onPersist} /></div>
+  if (selectedEditor === 'tina') return <div className={className}>{chooser}<TinaCmsAdapter content={editorContent} onChange={onChange} onPersist={onPersist} /></div>
+  if (selectedEditor === 'storyblok') return <div className={className}>{chooser}<StoryblokEditorAdapter content={content} title={pageTitle} slug={pageSlug} pageId={pageId} publish={publish} onChange={onChange} /></div>
+  if (selectedEditor === 'ckeditor') return <div className={className}>{chooser}<CkEditorAdapter content={editorContent} onChange={onChange} className="" placeholder={placeholder} /></div>
+  if (!editor) return <div className={className}>{chooser}<div className="rich-text-editor"><div className="editor-loading">Loading editor…</div></div></div>
 
   const addLink = () => {
     const href = window.prompt('Enter the link URL')
@@ -73,6 +139,7 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Start
 
   return (
     <div className={`rich-text-editor ${className}`}>
+      {chooser}
       <div className="editor-toolbar" role="toolbar" aria-label="Text formatting">
         <div className="editor-toolbar-group">
           <ToolbarButton label="Bold" active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}><Bold size={16} /></ToolbarButton>
@@ -105,7 +172,7 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Start
         {!preview && <EditorContent editor={editor} />}
         {preview && <div className="editor-preview editor-prose" dangerouslySetInnerHTML={{ __html: editor.getHTML() }} />}
       </div>
-      <div className="editor-status">Editor: TipTap · Change preferred editor in Site Settings</div>
+      <div className="editor-status">Editor: TipTap · Change the editor for this editing session above, or set a default in Site Settings.</div>
       <div className="editor-status">{editor.storage.characterCount?.characters?.() ?? editor.getText().length} characters</div>
     </div>
   )
@@ -113,10 +180,50 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Start
 
 
 function CkEditorAdapter({ content, onChange, className, placeholder }: { content: string; onChange: (value: string) => void; className: string; placeholder: string }) {
-  const [modules, setModules] = useState<{ CKEditor: any; ClassicEditor: any } | null>(null)
-  useEffect(() => { let active = true; Promise.all([import('@ckeditor/ckeditor5-react'), import('@ckeditor/ckeditor5-build-classic')]).then(([react, classic]) => { if (active) setModules({ CKEditor: react.CKEditor, ClassicEditor: classic.default }) }).catch(error => console.error('Could not load CKEditor:', error)); return () => { active = false } }, [])
+  const [modules, setModules] = useState<{ CKEditor: any; ClassicEditor: any; plugins: Record<string, any> } | null>(null)
+  const [loadError, setLoadError] = useState('')
+  useEffect(() => {
+    let active = true
+    Promise.all([import('@ckeditor/ckeditor5-react'), import('ckeditor5')]).then(([react, ckeditor]) => {
+      if (active) setModules({ CKEditor: react.CKEditor, ClassicEditor: ckeditor.ClassicEditor, plugins: ckeditor as unknown as Record<string, any> })
+    }).catch(error => {
+      console.error('Could not load CKEditor:', error)
+      if (active) setLoadError('CKEditor could not be loaded. Try TipTap or refresh the page.')
+    })
+    return () => { active = false }
+  }, [])
+  if (loadError) return <div role="alert" className={`rounded border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 ${className}`}>{loadError}</div>
   if (!modules) return <div className={`rich-text-editor ${className}`}><div className="editor-loading">Loading CKEditor…</div></div>
   const Editor = modules.CKEditor
   const ClassicEditor = modules.ClassicEditor
-  return <div className={`rich-text-editor ckeditor-adapter ${className}`}><p className="mb-2 text-xs text-gray-500">CKEditor 5 · formatting, tables, links, images, media embeds and undo/redo</p><Editor editor={ClassicEditor} data={content || `<p>${placeholder}</p>`} config={{ toolbar: ['heading','|','bold','italic','link','bulletedList','numberedList','blockQuote','insertTable','imageUpload','mediaEmbed','undo','redo'], table: { contentToolbar: ['tableColumn','tableRow','mergeTableCells'] } }} onChange={(_: unknown, editor: { getData: () => string }) => onChange(editor.getData())} /></div>
+  const p = modules.plugins
+  const attachAdminUploadAdapter = (editor: any) => {
+    const repository = editor.plugins.get('FileRepository')
+    repository.createUploadAdapter = (loader: { file: Promise<File> }) => ({
+      upload: async () => {
+        const file = await loader.file
+        const form = new FormData()
+        form.append('file', file)
+        form.append('category', 'GENERAL')
+        form.append('alt', file.name)
+        form.append('isPublic', 'true')
+        const response = await fetch('/api/media', { method: 'POST', body: form })
+        const result = await response.json()
+        if (!response.ok || typeof result.url !== 'string' || !result.url) throw new Error(result.error || 'Image upload failed')
+        return { default: result.url }
+      },
+      abort: () => undefined,
+    })
+  }
+  const config = {
+    licenseKey: process.env.NEXT_PUBLIC_CKEDITOR_LICENSE_KEY || 'GPL',
+    placeholder,
+    plugins: [p.Essentials, p.Paragraph, p.Heading, p.Bold, p.Italic, p.Underline, p.Link, p.List, p.BlockQuote, p.Table, p.TableToolbar, p.Image, p.ImageToolbar, p.ImageCaption, p.ImageStyle, p.ImageUpload, p.MediaEmbed, p.CodeBlock, p.Alignment],
+    extraPlugins: [attachAdminUploadAdapter],
+    toolbar: ['undo', 'redo', '|', 'heading', '|', 'bold', 'italic', 'underline', 'link', 'bulletedList', 'numberedList', 'blockQuote', '|', 'insertTable', 'uploadImage', 'mediaEmbed', 'codeBlock', '|', 'alignment'],
+    table: { contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells'] },
+    image: { toolbar: ['imageTextAlternative', 'imageStyle:inline', 'imageStyle:block', 'imageStyle:side'] },
+    mediaEmbed: { previewsInData: true },
+  }
+  return <div className={`rich-text-editor ckeditor-adapter ${className}`}><p className="mb-2 text-xs text-gray-500">CKEditor 5 · formatting, tables, links, uploaded images, media embeds, code blocks and undo/redo</p><Editor editor={ClassicEditor} data={content || ''} config={config} onChange={(_: unknown, editor: { getData: () => string }) => onChange(editor.getData())} /></div>
 }

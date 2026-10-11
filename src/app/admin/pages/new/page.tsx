@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import AdminLayout from '@/components/admin/admin-layout'
 import RichTextEditor from '@/components/admin/rich-text-editor'
+import ContentRenderer from '@/components/content/content-renderer'
 import { Eye, Save, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { slugify } from '@/lib/utils'
@@ -314,6 +315,9 @@ export default function NewPage() {
               <RichTextEditor
                 content={content}
                 onChange={setContent}
+                pageTitle={watchedValues.title || ''}
+                pageSlug={watchedValues.slug || ''}
+                publish={watchedValues.status === 'PUBLISHED'}
                 placeholder="Start writing your page content..."
                 showPreview={true}
                 splitView={true}
@@ -334,10 +338,7 @@ export default function NewPage() {
                   {watchedValues.description && (
                     <p className="text-gray-600 mb-6">{watchedValues.description}</p>
                   )}
-                  <div 
-                    className="prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: content || '<p>No content yet...</p>' }}
-                  />
+                  {content ? <ContentRenderer content={content} /> : <p className="text-sm text-gray-500">No content yet...</p>}
                 </div>
               </div>
             </div>
