@@ -6,12 +6,6 @@ const globalForPrisma = globalThis as unknown as {
 
 // Create Prisma client with error handling for build time and serverless optimization
 function createPrismaClient() {
-  // Avoid constructing a live client during local production builds.
-  if (process.env.NODE_ENV === 'production' && !process.env.VERCEL) {
-    console.warn('Skipping Prisma Client creation in non-Vercel production')
-    return null as any
-  }
-
   if (!process.env.DATABASE_URL) {
     console.warn('DATABASE_URL is not set')
     return null as any

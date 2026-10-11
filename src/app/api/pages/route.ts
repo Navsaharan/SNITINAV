@@ -3,8 +3,9 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
-import { createSecureApi, validators, createSuccessResponse } from '@/lib/secure-api'
+import { createSecureApi, validators } from '@/lib/secure-api'
 import { revalidatePublicContent } from '@/lib/revalidate-public-content'
+import { sanitizePageHtml } from '@/lib/sanitize-page-html'
 
 
 const createPageSchema = z.object({
@@ -23,7 +24,7 @@ const createPageSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || (session as any).user?.role !== 'ADMIN') {
+    if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -70,7 +71,7 @@ export const POST = createSecureApi(
     const title = validators.string(body.title, 'title', 1, 200)
     const slug = validators.string(body.slug, 'slug', 1, 100)
     const description = validators.optionalString(body.description, 'description', 1000)
-    const content = validators.optionalString(body.content, 'content', 50000)
+    const content = sanitizePageHtml(validators.optionalString(body.content, 'content', 50000))
     const metaTitle = validators.optionalString(body.metaTitle, 'metaTitle', 200)
     const metaDesc = validators.optionalString(body.metaDesc, 'metaDesc', 500)
     const status = validators.enum(body.status || 'DRAFT', 'status', ['DRAFT', 'PUBLISHED', 'ARCHIVED'])
@@ -117,7 +118,7 @@ export const POST = createSecureApi(
     return NextResponse.json(page, { status: 201 })
   },
   {
-    requireAdmin: true,
+    requireRoles: ['ADMIN', 'EDITOR'],
     sanitizeInput: true,
     logAudit: true,
   }

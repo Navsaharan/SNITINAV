@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { revalidatePublicContent } from '@/lib/revalidate-public-content'
+import { canManagePages, hasRole } from '@/lib/security'
+import { sanitizePageHtml } from '@/lib/sanitize-page-html'
 
 
 const updatePageSchema = z.object({
@@ -28,7 +30,7 @@ export async function GET(
   try {
     const { id } = await params;
     const session = await getServerSession(authOptions)
-    if (!session || (session as any).user?.role !== 'ADMIN') {
+    if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -67,7 +69,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const session = await getServerSession(authOptions)
-    if (!session || (session as any).user?.role !== 'ADMIN') {
+    if (!session || !canManagePages((session as any).user?.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -99,7 +101,7 @@ export async function PUT(
     if (validatedData.title !== undefined) updateData.title = validatedData.title
     if (validatedData.slug !== undefined) updateData.slug = validatedData.slug
     if (validatedData.description !== undefined) updateData.description = validatedData.description
-    if (validatedData.content !== undefined) updateData.content = validatedData.content
+    if (validatedData.content !== undefined) updateData.content = sanitizePageHtml(validatedData.content)
     if (validatedData.metaTitle !== undefined) updateData.metaTitle = validatedData.metaTitle
     if (validatedData.metaDesc !== undefined) updateData.metaDesc = validatedData.metaDesc
     if (validatedData.status !== undefined) updateData.status = validatedData.status
@@ -150,7 +152,7 @@ export async function DELETE(
   try {
     const { id } = await params;
     const session = await getServerSession(authOptions)
-    if (!session || (session as any).user.role !== 'ADMIN') {
+    if (!session || !hasRole((session as any).user?.role, ['ADMIN'])) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

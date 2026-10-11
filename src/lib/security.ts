@@ -84,6 +84,18 @@ export async function requireAuth(request: NextRequest): Promise<NextResponse | 
   return null
 }
 
+export function normalizeRole(role: unknown): string {
+  return typeof role === 'string' ? role.toUpperCase() : ''
+}
+
+export function hasRole(role: unknown, allowedRoles: string[]): boolean {
+  return allowedRoles.some((allowedRole) => normalizeRole(role) === normalizeRole(allowedRole))
+}
+
+export function canManagePages(role: unknown): boolean {
+  return hasRole(role, ['ADMIN', 'EDITOR'])
+}
+
 // Admin authentication middleware
 export async function requireAdmin(request: NextRequest): Promise<NextResponse | null> {
   const token = await getToken({ req: request })
@@ -95,7 +107,7 @@ export async function requireAdmin(request: NextRequest): Promise<NextResponse |
     )
   }
   
-  if (token.role !== 'admin') {
+  if (!hasRole(token.role, ['ADMIN'])) {
     return NextResponse.json(
       { error: 'Admin access required' },
       { status: 403 }
