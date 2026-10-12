@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import bcrypt from 'bcryptjs'
+import { recordSessionAudit } from '@/lib/admin-audit'
 
 
 const createUserSchema = z.object({
@@ -99,6 +100,7 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    await recordSessionAudit(request, session, 'CREATE', '/api/users', { userId: user.id, email: user.email, role: user.role })
     return NextResponse.json(user, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {

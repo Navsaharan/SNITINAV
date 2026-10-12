@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { revalidatePublicContent } from '@/lib/revalidate-public-content'
+import { recordSessionAudit } from '@/lib/admin-audit'
 
 type RouteContext = { params: Promise<{ id: string }> }
 const publicImageUrlSchema = z.string().max(2048).refine((value) => !value || /^https?:\/\/[^\s]+$/i.test(value) || (value.startsWith('/') && !value.startsWith('//')), 'Photo URL must be HTTP(S) or a same-site path')
@@ -74,6 +75,7 @@ export async function PUT(
     })
 
     revalidatePublicContent()
+    await recordSessionAudit(request, session, 'UPDATE', `/api/faculty/${id}`, { facultyId: id, changedFields: Object.keys(validatedData) })
     return NextResponse.json({ faculty })
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -102,6 +104,7 @@ export async function DELETE(
     })
 
     revalidatePublicContent()
+    await recordSessionAudit(request, session, 'DELETE', `/api/faculty/${id}`, { facultyId: id })
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error deleting faculty member:', error)

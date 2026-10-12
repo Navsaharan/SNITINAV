@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { revalidatePublicContent } from '@/lib/revalidate-public-content'
 import { canManagePages, hasRole } from '@/lib/security'
 import { sanitizePageHtml } from '@/lib/sanitize-page-html'
+import { getDeviceMetadata, recordAdminAudit } from '@/lib/admin-audit'
 
 
 const updatePageSchema = z.object({
@@ -127,6 +128,15 @@ export async function PUT(
 
     revalidatePublicContent(page.slug)
     if (existingPage.slug !== page.slug) revalidatePublicContent(existingPage.slug)
+    await recordAdminAudit({
+      userId: (session as any).user.id,
+      sessionId: (session as any).user.sessionId,
+      action: 'UPDATE',
+      method: 'PUT',
+      resource: `/api/pages/${id}`,
+      details: { pageId: id, changedFields: Object.keys(validatedData) },
+      ...getDeviceMetadata(request),
+    })
     return NextResponse.json(page)
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -177,6 +187,15 @@ export async function DELETE(
       where: { id: id }
     })
     revalidatePublicContent(existingPage.slug)
+    await recordAdminAudit({
+      userId: (session as any).user.id,
+      sessionId: (session as any).user.sessionId,
+      action: 'DELETE',
+      method: 'DELETE',
+      resource: `/api/pages/${id}`,
+      details: { pageId: id, slug: existingPage.slug },
+      ...getDeviceMetadata(request),
+    })
 
     return NextResponse.json({ message: 'Page deleted successfully' })
   } catch (error) {

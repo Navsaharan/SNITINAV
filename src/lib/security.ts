@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getToken } from 'next-auth/jwt'
 import { checkRateLimit, getRateLimitError } from './error-handler'
+import { recordAdminAudit } from './admin-audit'
 
 // Security headers configuration
 export const securityHeaders = {
@@ -192,6 +193,8 @@ export function validatePasswordStrength(password: string): { valid: boolean; er
 // Audit logging
 export interface AuditLog {
   userId?: string
+  sessionId?: string
+  deviceId?: string
   action: string
   resource: string
   details?: any
@@ -201,14 +204,14 @@ export interface AuditLog {
 }
 
 export async function logAuditEvent(log: Omit<AuditLog, 'timestamp'>): Promise<void> {
-  const auditEntry: AuditLog = {
-    ...log,
-    timestamp: new Date(),
-  }
-  
-  // In a real implementation, you'd save this to a database
-  console.log('AUDIT LOG:', JSON.stringify(auditEntry, null, 2))
-  
-  // You could also send to external logging service
-  // await sendToLoggingService(auditEntry)
+  await recordAdminAudit({
+    userId: log.userId,
+    sessionId: log.sessionId,
+    action: log.action,
+    resource: log.resource,
+    details: log.details,
+    ipAddress: log.ip,
+    userAgent: log.userAgent,
+    deviceId: log.deviceId,
+  })
 }

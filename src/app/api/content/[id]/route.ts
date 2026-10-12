@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { recordSessionAudit } from '@/lib/admin-audit'
 
 const updateContentSchema = z.object({
   type: z.enum(['TEXT', 'HTML', 'IMAGE', 'GALLERY', 'SLIDESHOW', 'TABLE', 'LIST', 'CONTACT_INFO', 'DOWNLOAD']).optional(),
@@ -84,6 +85,7 @@ export async function PUT(
       }
     })
 
+    await recordSessionAudit(request, session, 'UPDATE', `/api/content/${id}`, { contentId: id, changedFields: Object.keys(validatedData) })
     return NextResponse.json(content)
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -119,6 +121,7 @@ export async function DELETE(
       where: { id }
     })
 
+    await recordSessionAudit(request, session, 'DELETE', `/api/content/${id}`, { contentId: id, pageId: existingContent.pageId })
     return NextResponse.json({ message: 'Content deleted successfully' })
   } catch (error) {
     console.error('Error deleting content:', error)

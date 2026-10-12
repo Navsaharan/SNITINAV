@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { recordSessionAudit } from '@/lib/admin-audit'
 
 
 const updateSettingsSchema = z.object({
@@ -88,6 +89,7 @@ export async function PUT(request: NextRequest) {
       return acc
     }, {} as Record<string, { value: string; type: string }>)
 
+    await recordSessionAudit(request, session, 'UPDATE', '/api/settings', { keys: validatedData.settings.map((setting) => setting.key) })
     return NextResponse.json(settingsObject)
   } catch (error) {
     if (error instanceof z.ZodError) {

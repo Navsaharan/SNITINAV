@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getToken } from 'next-auth/jwt'
+import { getDeviceMetadata, recordAdminAudit } from './admin-audit'
 
 /**
  * Wrapper for API routes that prevents execution during build time
@@ -12,7 +14,22 @@ export function buildSafeApiRoute(handler: (req: NextRequest, params?: any) => P
     }
 
     try {
-      return await handler(req, params)
+      const token = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method) ? await getToken({ req }) : null
+      const response = await handler(req, params)
+      if (token) {
+        await recordAdminAudit({
+          userId: String(token.id || token.sub || ''),
+          sessionId: typeof token.sessionId === 'string' ? token.sessionId : null,
+          deviceId: typeof token.deviceId === 'string' ? token.deviceId : null,
+          action: req.method,
+          method: req.method,
+          resource: req.nextUrl.pathname,
+          details: { status: response.status },
+          ...getDeviceMetadata(req),
+          success: response.status < 400,
+        })
+      }
+      return response
     } catch (error) {
       console.error('API route error:', error)
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

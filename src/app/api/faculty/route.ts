@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { revalidatePublicContent } from '@/lib/revalidate-public-content'
+import { recordSessionAudit } from '@/lib/admin-audit'
 
 const publicImageUrlSchema = z.string().max(2048).refine((value) => !value || /^https?:\/\/[^\s]+$/i.test(value) || (value.startsWith('/') && !value.startsWith('//')), 'Photo URL must be HTTP(S) or a same-site path')
 
@@ -68,6 +69,7 @@ export async function POST(request: NextRequest) {
     })
 
     revalidatePublicContent()
+    await recordSessionAudit(request, session, 'CREATE', '/api/faculty', { facultyId: faculty.id, name: faculty.name })
     return NextResponse.json({ faculty }, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -98,6 +100,7 @@ export async function PUT(request: NextRequest) {
     ))
 
     revalidatePublicContent()
+    await recordSessionAudit(request, session, 'UPDATE', '/api/faculty', { facultyIds, change: 'order' })
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error updating faculty order:', error)

@@ -19,6 +19,7 @@ import {
   Lock,
   TestTube,
   Navigation,
+  ClipboardList,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -46,6 +47,7 @@ const navigation = [
   { name: 'Password', href: '/admin/password', icon: Lock },
   { name: 'Users', href: '/admin/users', icon: Users },
   { name: 'Messages', href: '/admin/messages', icon: MessageSquare },
+  { name: 'Audit Logs', href: '/admin/audit', icon: ClipboardList },
 ]
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
@@ -62,8 +64,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     )
   }
 
-  const handleSignOut = () => {
-    signOut({ callbackUrl: '/' })
+  const handleSignOut = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' }).catch(() => undefined)
+    await signOut({ callbackUrl: '/' })
   }
 
   const NavigationItem = ({ item, isMobile = false }: { item: any, isMobile?: boolean }) => {
@@ -165,6 +168,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               <NavigationItem key={item.name} item={item} isMobile={true} />
             ))}
           </nav>
+          <div className="border-t border-gray-200 p-4">
+            <button type="button" onClick={() => void handleSignOut()} className="flex w-full items-center rounded-md px-2 py-2 text-sm font-medium text-red-700 hover:bg-red-50">
+              <LogOut className="mr-3 h-5 w-5" />
+              Log out
+            </button>
+          </div>
         </div>
       </div>
 
@@ -229,6 +238,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               >
                 View Site
               </Link>
+              <button type="button" onClick={() => void handleSignOut()} className="inline-flex items-center rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50" title="Log out of the admin panel">
+                <LogOut className="mr-2 h-4 w-4" />
+                Log out
+              </button>
             </div>
           </div>
         </div>

@@ -108,13 +108,15 @@ export function createSecureApi(
       // Execute the handler
       const response = await handler(context, body)
 
-      // Audit logging
-      if (options.logAudit && user) {
+      // Persist an audit record for every protected mutation, plus explicitly audited reads.
+      if (user && (options.logAudit || ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method))) {
         await logAuditEvent({
           userId: user.sub,
+          sessionId: typeof user.sessionId === 'string' ? user.sessionId : undefined,
+          deviceId: typeof user.deviceId === 'string' ? user.deviceId : undefined,
           action: request.method,
           resource: request.nextUrl.pathname,
-          details: body ? { bodyKeys: Object.keys(body) } : undefined,
+          details: body ? { bodyKeys: Object.keys(body), query: Object.fromEntries(request.nextUrl.searchParams.entries()) } : { query: Object.fromEntries(request.nextUrl.searchParams.entries()) },
           ip: clientIP,
           userAgent: request.headers.get('user-agent') || 'unknown',
         })

@@ -17,6 +17,10 @@ model User {
   name      String?
   password  String
   role      UserRole @default(EDITOR)
+  activeSessionId String? @unique
+  lastLoginAt DateTime?
+  lastLoginIp String?
+  lastLoginUserAgent String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -24,6 +28,8 @@ model User {
   createdPages    Page[]
   createdMedia    Media[]
   createdContents Content[]
+  adminSessions   AdminSession[]
+  auditLogs       AdminAuditLog[]
 
   @@map("users")
 }
@@ -242,4 +248,65 @@ model PageView {
   createdAt DateTime @default(now())
 
   @@map("page_views")
+}
+
+// Server-side admin login sessions. A user may have only one active session.
+model AdminSession {
+  id          String    @id @default(cuid())
+  userId      String
+  deviceId    String
+  deviceName  String?
+  platform    String?
+  language    String?
+  timezone    String?
+  userAgent   String?
+  ipAddress   String?
+  country     String?
+  region      String?
+  city        String?
+  latitude    Float?
+  longitude   Float?
+  startedAt   DateTime  @default(now())
+  lastSeenAt  DateTime  @default(now())
+  endedAt     DateTime?
+  revokedAt   DateTime?
+  revokeReason String?
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, lastSeenAt])
+  @@index([deviceId])
+  @@map("admin_sessions")
+}
+
+// Immutable audit trail for authentication and every audited admin mutation.
+model AdminAuditLog {
+  id          String    @id @default(cuid())
+  userId      String?
+  sessionId   String?
+  action      String
+  method      String?
+  resource    String
+  details     Json
+  ipAddress   String?
+  userAgent   String?
+  deviceId    String?
+  deviceName  String?
+  platform    String?
+  language    String?
+  timezone    String?
+  country     String?
+  region      String?
+  city        String?
+  latitude    Float?
+  longitude   Float?
+  success     Boolean   @default(true)
+  errorMessage String?
+  createdAt   DateTime  @default(now())
+  user        User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+  @@index([resource, createdAt])
+  @@map("admin_audit_logs")
 }

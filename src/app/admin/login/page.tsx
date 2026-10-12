@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { signIn, getSession } from 'next-auth/react'
+import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -32,9 +32,24 @@ export default function LoginPage() {
     setError('')
 
     try {
+      const storageKey = 'snitinav-admin-device-id'
+      let deviceId = window.localStorage.getItem(storageKey)
+      if (!deviceId) {
+        deviceId = window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`
+        window.localStorage.setItem(storageKey, deviceId)
+      }
+      const contextResponse = await fetch('/api/auth/device-context', { cache: 'no-store' })
+      const deviceContext = contextResponse.ok ? await contextResponse.json() : {}
       const result = await signIn('credentials', {
         email: data.email,
         password: data.password,
+        deviceId,
+        deviceName: `${navigator.platform || 'Unknown'} browser`,
+        platform: navigator.platform,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        language: navigator.language,
+        userAgent: navigator.userAgent,
+        ...deviceContext,
         redirect: false,
         callbackUrl: '/admin'
       })

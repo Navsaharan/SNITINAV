@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth/next'
 import { createClient } from '@supabase/supabase-js'
 import { randomUUID } from 'crypto'
 import { revalidatePublicContent } from '@/lib/revalidate-public-content'
+import { recordSessionAudit } from '@/lib/admin-audit'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
@@ -237,6 +238,7 @@ export async function POST(request: NextRequest) {
     })
 
     revalidatePublicContent()
+    await recordSessionAudit(request, session, 'CREATE', '/api/media', { mediaId: media.id, filename, mimeType: file.type, size: file.size, category })
 
     // Return a temporary URL for PDFs, while keeping their stored reference private.
     if (isPdf) {

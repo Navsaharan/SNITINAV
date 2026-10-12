@@ -6,6 +6,7 @@ import { unlink } from 'fs/promises'
 import { join } from 'path'
 import { existsSync } from 'fs'
 import { revalidatePublicContent } from '@/lib/revalidate-public-content'
+import { recordSessionAudit } from '@/lib/admin-audit'
 
 // GET /api/media/[id] - Get specific media file
 export async function GET(
@@ -79,6 +80,7 @@ export async function PUT(
       }
     })
 
+    await recordSessionAudit(request, session, 'UPDATE', `/api/media/${id}`, { mediaId: id, changedFields: ['alt', 'caption', ...(isPublic !== undefined ? ['isPublic'] : [])] })
     return NextResponse.json(media)
   } catch (error) {
     console.error('Error updating media:', error)
@@ -124,6 +126,7 @@ export async function DELETE(
     })
     revalidatePublicContent()
 
+    await recordSessionAudit(request, session, 'DELETE', `/api/media/${id}`, { mediaId: id, filename: existingMedia.filename })
     return NextResponse.json({ message: 'Media deleted successfully' })
   } catch (error) {
     console.error('Error deleting media:', error)

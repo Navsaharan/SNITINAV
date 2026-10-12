@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { recordSessionAudit } from '@/lib/admin-audit'
 
 
 const createContentSchema = z.object({
@@ -85,6 +86,7 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    await recordSessionAudit(request, session, 'CREATE', '/api/content', { contentId: content.id, pageId: content.pageId, type: content.type })
     return NextResponse.json(content, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {

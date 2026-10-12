@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getDeviceMetadata, recordAdminAudit } from '@/lib/admin-audit'
 
 interface ExtendedUser {
   id: string
@@ -86,6 +87,15 @@ export async function POST(request: NextRequest) {
         password: hashedNewPassword,
         updatedAt: new Date()
       }
+    })
+    await recordAdminAudit({
+      userId,
+      sessionId: (session as any).user.sessionId,
+      action: 'PASSWORD_CHANGE',
+      method: 'POST',
+      resource: '/api/auth/change-password',
+      details: { passwordChanged: true },
+      ...getDeviceMetadata(request),
     })
 
     return NextResponse.json(

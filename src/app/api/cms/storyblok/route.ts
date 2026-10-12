@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { revalidatePublicContent } from '@/lib/revalidate-public-content'
 import { makeStoryblokPageReference } from '@/lib/page-editor-content'
+import { recordSessionAudit } from '@/lib/admin-audit'
 
 export const runtime = 'nodejs'
 
@@ -20,7 +21,7 @@ function storyblokClient() {
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions)
-  return session && (session as any).user?.role === 'ADMIN'
+  return session && (session as any).user?.role === 'ADMIN' ? session : null
 }
 
 const saveSchema = z.object({
@@ -60,7 +61,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  if (!(await requireAdmin())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const session = await requireAdmin()
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const client = storyblokClient()
   if (!client) return NextResponse.json({ error: 'Configure STORYBLOK_SPACE_ID, STORYBLOK_MANAGEMENT_TOKEN and STORYBLOK_PUBLIC_ACCESS_TOKEN on the server before using Storyblok.' }, { status: 503 })
   if (!process.env.STORYBLOK_PUBLIC_ACCESS_TOKEN) return NextResponse.json({ error: 'Configure STORYBLOK_PUBLIC_ACCESS_TOKEN so the published website can render the Storyblok page.' }, { status: 503 })
@@ -94,6 +96,12 @@ export async function POST(request: NextRequest) {
       await prisma.page.update({ where: { id: body.pageId }, data: { content: reference } })
       revalidatePublicContent(body.slug)
     }
+    await recordSessionAudit(request, session, existing?.id ? 'UPDATE' : 'CREATE', '/api/cms/storyblok', {
+      pageId: body.pageId || null,
+      slug: body.slug,
+      storyId,
+      publish: body.publish,
+    })
     return NextResponse.json({ ok: true, storyId, reference, published: body.publish })
   } catch (error) {
     if (error instanceof z.ZodError) return NextResponse.json({ error: error.errors }, { status: 400 })

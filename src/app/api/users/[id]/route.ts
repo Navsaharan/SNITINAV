@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import bcrypt from 'bcryptjs'
+import { recordSessionAudit } from '@/lib/admin-audit'
 
 
 const updateUserSchema = z.object({
@@ -132,6 +133,7 @@ export async function PUT(
       }
     })
 
+    await recordSessionAudit(request, session, 'UPDATE', `/api/users/${id}`, { userId: id, changedFields: Object.keys(validatedData), passwordChanged: Boolean(validatedData.password) })
     return NextResponse.json(user)
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -172,6 +174,7 @@ export async function DELETE(
       where: { id }
     })
 
+    await recordSessionAudit(request, session, 'DELETE', `/api/users/${id}`, { userId: id, email: existingUser.email })
     return NextResponse.json({ message: 'User deleted successfully' })
   } catch (error) {
     console.error('Error deleting user:', error)
