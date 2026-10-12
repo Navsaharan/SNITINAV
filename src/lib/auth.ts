@@ -64,13 +64,13 @@ export const authOptions = {
           const user = await prisma.user.findUnique({
             where: { email: String(credentials.email).toLowerCase() },
           })
-          if (!user) {
-            await recordAdminAudit({ action: 'LOGIN_FAILED', method: 'POST', resource: 'authentication', details: { reason: 'invalid_credentials' }, success: false, errorMessage: 'Invalid email or password', ...metadata })
+        if (!user) {
+            await recordAdminAudit({ userEmail: String(credentials.email).trim().toLowerCase(), action: 'LOGIN_FAILED', method: 'POST', resource: 'authentication', details: { reason: 'invalid_credentials' }, success: false, errorMessage: 'Invalid email or password', ...metadata })
             throw new Error('Invalid email or password')
-          }
+        }
           const isPasswordValid = await bcrypt.compare(String(credentials.password), user.password)
           if (!isPasswordValid) {
-            await recordAdminAudit({ userId: user.id, action: 'LOGIN_FAILED', method: 'POST', resource: 'authentication', details: { reason: 'invalid_credentials' }, success: false, errorMessage: 'Invalid email or password', ...metadata })
+            await recordAdminAudit({ userId: user.id, userEmail: user.email, action: 'LOGIN_FAILED', method: 'POST', resource: 'authentication', details: { reason: 'invalid_credentials' }, success: false, errorMessage: 'Invalid email or password', ...metadata })
             throw new Error('Invalid email or password')
           }
           const sessionId = await createAdminSession(user.id, metadata)

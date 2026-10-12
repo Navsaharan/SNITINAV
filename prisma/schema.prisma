@@ -282,10 +282,12 @@ model AdminSession {
 model AdminAuditLog {
   id          String    @id @default(cuid())
   userId      String?
+  userEmail   String?
   sessionId   String?
   action      String
   method      String?
   resource    String
+  resourceId  String?
   details     Json
   ipAddress   String?
   userAgent   String?

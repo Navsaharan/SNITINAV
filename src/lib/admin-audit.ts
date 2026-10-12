@@ -65,10 +65,12 @@ function auditData(metadata: DeviceMetadata) {
 
 export interface AuditEventInput extends DeviceMetadata {
   userId?: string | null
+  userEmail?: string | null
   sessionId?: string | null
   action: string
   method?: string | null
   resource: string
+  resourceId?: string | null
   details?: unknown
   success?: boolean
   errorMessage?: string | null
@@ -76,14 +78,19 @@ export interface AuditEventInput extends DeviceMetadata {
 
 export async function recordAdminAudit(event: AuditEventInput): Promise<void> {
   try {
+    const userEmail = event.userEmail || (event.userId
+      ? (await prisma.user.findUnique({ where: { id: event.userId }, select: { email: true } }))?.email || null
+      : null)
     await prisma.adminAuditLog.create({
       data: {
         id: randomUUID(),
         userId: event.userId || null,
+        userEmail,
         sessionId: event.sessionId || null,
         action: event.action,
         method: event.method || null,
         resource: event.resource,
+        resourceId: event.resourceId || null,
         details: (event.details ?? {}) as object,
         ...auditData(event),
         success: event.success ?? true,
@@ -106,6 +113,7 @@ export async function recordSessionAudit(
 ): Promise<void> {
   await recordAdminAudit({
     userId: session?.user?.id,
+    userEmail: session?.user?.email,
     sessionId: session?.user?.sessionId,
     action,
     method: request.method,
@@ -120,7 +128,7 @@ export async function createAdminSession(userId: string, metadata: DeviceMetadat
   const sessionId = randomUUID()
   const now = new Date()
   await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-    const user = await tx.user.findUnique({ where: { id: userId }, select: { activeSessionId: true } })
+    const user = await tx.user.findUnique({ where: { id: userId }, select: { email: true, activeSessionId: true } })
     if (user?.activeSessionId) {
       await tx.adminSession.updateMany({
         where: { id: user.activeSessionId, revokedAt: null },
@@ -130,6 +138,7 @@ export async function createAdminSession(userId: string, metadata: DeviceMetadat
         data: {
           id: randomUUID(),
           userId,
+          userEmail: user?.email,
           sessionId: user.activeSessionId,
           action: 'SESSION_REVOKED',
           method: 'LOGIN',
@@ -173,6 +182,7 @@ export async function createAdminSession(userId: string, metadata: DeviceMetadat
       data: {
         id: randomUUID(),
         userId,
+        userEmail: user?.email,
         sessionId,
         action: 'LOGIN',
         method: 'POST',
@@ -198,7 +208,7 @@ export async function isAdminSessionActive(userId: string, sessionId: string): P
 
 export async function endAdminSession(sessionId: string, metadata: DeviceMetadata, reason = 'logout'): Promise<void> {
   const now = new Date()
-  const session = await prisma.adminSession.findUnique({ where: { id: sessionId }, select: { userId: true } })
+  const session = await prisma.adminSession.findUnique({ where: { id: sessionId }, select: { userId: true, user: { select: { email: true } } } })
   if (!session) return
   await prisma.$transaction([
     prisma.adminSession.updateMany({
@@ -213,6 +223,7 @@ export async function endAdminSession(sessionId: string, metadata: DeviceMetadat
       data: {
         id: randomUUID(),
         userId: session.userId,
+        userEmail: session.user.email,
         sessionId,
         action: reason === 'logout' ? 'LOGOUT' : 'SESSION_REVOKED',
         method: 'POST',
