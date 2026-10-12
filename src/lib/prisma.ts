@@ -12,8 +12,7 @@ function createPrismaClient() {
   }
 
   try {
-    // Preserve existing PostgreSQL URL parameters (Supabase URLs already
-    // commonly include schema, pgbouncer, sslmode, and connection_limit).
+    // Normalize Supabase pooling parameters for Vercel serverless functions.
     const databaseUrl = new URL(process.env.DATABASE_URL)
     if (databaseUrl.hostname.includes('supabase')) {
       if (!databaseUrl.searchParams.has('sslmode')) {
@@ -22,9 +21,8 @@ function createPrismaClient() {
       if (!databaseUrl.searchParams.has('pgbouncer')) {
         databaseUrl.searchParams.set('pgbouncer', 'true')
       }
-      if (!databaseUrl.searchParams.has('connection_limit')) {
-        databaseUrl.searchParams.set('connection_limit', '5')
-      }
+      databaseUrl.searchParams.set('connection_limit', '5')
+      databaseUrl.searchParams.set('pool_timeout', '20')
     }
 
     return new PrismaClient({
@@ -50,9 +48,4 @@ export async function disconnectPrisma() {
   if (prisma && typeof prisma.$disconnect === 'function') {
     await prisma.$disconnect()
   }
-}
-
-// Auto-disconnect in serverless environments
-if (typeof process !== 'undefined' && process.env.VERCEL) {
-  process.on('beforeExit', disconnectPrisma)
 }
