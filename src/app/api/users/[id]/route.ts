@@ -170,6 +170,19 @@ export async function DELETE(
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
+    const [pageCount, mediaCount, contentCount, auditCount] = await Promise.all([
+      prisma.page.count({ where: { createdById: id } }),
+      prisma.media.count({ where: { createdById: id } }),
+      prisma.content.count({ where: { createdById: id } }),
+      prisma.adminAuditLog.count({ where: { userId: id } }),
+    ])
+    if (pageCount || mediaCount || contentCount || auditCount) {
+      return NextResponse.json({
+        error: 'User cannot be deleted while they own CMS records or audit history. Deactivate the account or transfer its records first.',
+        counts: { pages: pageCount, media: mediaCount, content: contentCount, auditLogs: auditCount },
+      }, { status: 409 })
+    }
+
     await prisma.user.delete({
       where: { id }
     })

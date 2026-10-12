@@ -5,7 +5,8 @@ import { sanityStatus } from '@/lib/sanity'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
-  if (!session || (session as any).user?.role !== 'ADMIN') {
+  const role = String((session as any)?.user?.role || '').toUpperCase()
+  if (!session || !['ADMIN', 'EDITOR'].includes(role)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
   const storyblokRequirements = [

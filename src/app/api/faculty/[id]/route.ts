@@ -83,6 +83,9 @@ export async function PUT(
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.errors }, { status: 400 })
     }
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'P2025') {
+      return NextResponse.json({ error: 'Faculty member not found' }, { status: 404 })
+    }
     console.error('Error updating faculty member:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
@@ -109,6 +112,9 @@ export async function DELETE(
     await recordSessionAudit(request, session, 'DELETE', `/api/faculty/${id}`, { facultyId: id })
     return NextResponse.json({ success: true })
   } catch (error) {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 'P2025') {
+      return NextResponse.json({ error: 'Faculty member not found' }, { status: 404 })
+    }
     console.error('Error deleting faculty member:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

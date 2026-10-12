@@ -19,9 +19,10 @@ function storyblokClient() {
   })
 }
 
-async function requireAdmin() {
+async function requireEditor() {
   const session = await getServerSession(authOptions)
-  return session && (session as any).user?.role === 'ADMIN' ? session : null
+  const role = String((session as any)?.user?.role || '').toUpperCase()
+  return session && (role === 'ADMIN' || role === 'EDITOR') ? session : null
 }
 
 const saveSchema = z.object({
@@ -33,7 +34,7 @@ const saveSchema = z.object({
 })
 
 export async function GET(request: NextRequest) {
-  if (!(await requireAdmin())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!(await requireEditor())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const client = storyblokClient()
   if (!client) {
     return NextResponse.json({ configured: false, error: 'Storyblok server settings are not configured.' }, { status: 503 })
@@ -61,7 +62,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await requireAdmin()
+  const session = await requireEditor()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const client = storyblokClient()
   if (!client) return NextResponse.json({ error: 'Configure STORYBLOK_SPACE_ID, STORYBLOK_MANAGEMENT_TOKEN and STORYBLOK_PUBLIC_ACCESS_TOKEN on the server before using Storyblok.' }, { status: 503 })
