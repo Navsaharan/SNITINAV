@@ -6,8 +6,9 @@ import MainLayout from '@/components/layout/main-layout'
 import ContentRenderer from '@/components/content/content-renderer'
 import Breadcrumbs from '@/components/ui/breadcrumbs'
 import PageSidebar from '@/components/page/page-sidebar'
-import { parseStoryblokPageReference } from '@/lib/page-editor-content'
+import { parseSanityPageReference, parseStoryblokPageReference } from '@/lib/page-editor-content'
 import { getPublishedStoryblokPage } from '@/lib/storyblok-pages'
+import { getSanityPage } from '@/lib/sanity'
 
 export const revalidate = 60
 
@@ -131,11 +132,20 @@ export default async function DynamicPage({ params }: PageProps) {
 
   let renderedPageContent = page.content || ''
   const storyblokSlug = parseStoryblokPageReference(page.content)
+  const sanitySlug = parseSanityPageReference(page.content)
   if (storyblokSlug) {
     try {
       renderedPageContent = await getPublishedStoryblokPage(storyblokSlug) || '<p>Page content is temporarily unavailable.</p>'
     } catch (error) {
       console.error('Could not load published Storyblok page:', error instanceof Error ? error.message : 'unknown error')
+      renderedPageContent = '<p>Page content is temporarily unavailable.</p>'
+    }
+  }
+  if (sanitySlug) {
+    try {
+      renderedPageContent = (await getSanityPage(sanitySlug))?.content || '<p>Page content is temporarily unavailable.</p>'
+    } catch (error) {
+      console.error('Could not load published Sanity page:', error instanceof Error ? error.message : 'unknown error')
       renderedPageContent = '<p>Page content is temporarily unavailable.</p>'
     }
   }

@@ -1,5 +1,6 @@
 export const PUCK_PAGE_PREFIX = '<!--snitinav-puck-page:v1-->\n'
 export const STORYBLOK_PAGE_PREFIX = '<!--snitinav-storyblok-page:v1-->'
+export const SANITY_PAGE_PREFIX = '<!--snitinav-sanity-page:v1-->'
 
 export function makeStoryblokPageReference(slug: string): string {
   return `${STORYBLOK_PAGE_PREFIX}${encodeURIComponent(slug)}`
@@ -9,6 +10,16 @@ export function parseStoryblokPageReference(value?: string | null): string | nul
   if (!value?.startsWith(STORYBLOK_PAGE_PREFIX)) return null
   try {
     const slug = decodeURIComponent(value.slice(STORYBLOK_PAGE_PREFIX.length))
+    return /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)*$/.test(slug) ? slug : null
+  } catch {
+    return null
+  }
+}
+
+export function parseSanityPageReference(value?: string | null): string | null {
+  if (!value?.startsWith(SANITY_PAGE_PREFIX)) return null
+  try {
+    const slug = decodeURIComponent(value.slice(SANITY_PAGE_PREFIX.length))
     return /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\/[a-z0-9]+(?:-[a-z0-9]+)*)*$/.test(slug) ? slug : null
   } catch {
     return null

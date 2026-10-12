@@ -41,6 +41,7 @@ export default withAuth(
     return response
   },
   {
+    pages: { signIn: '/admin/login' },
     callbacks: {
       authorized: ({ token, req }) => {
         const pathname = req.nextUrl.pathname

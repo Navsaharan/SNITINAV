@@ -21,11 +21,12 @@ import {
 import '@/styles/rich-text-editor.css'
 import 'ckeditor5/ckeditor5.css'
 import StoryblokEditorAdapter from './storyblok-editor-adapter'
+import SanityEditorAdapter from './sanity-editor-adapter'
 import { parseStoryblokPageReference, puckPageContentToHtml } from '@/lib/page-editor-content'
 
 const PuckEditorAdapter = dynamic(() => import('./puck-editor-adapter'), { ssr: false })
 const TinaCmsAdapter = dynamic(() => import('./tina-cms-adapter'), { ssr: false })
-type EditorMode = 'tiptap' | 'ckeditor' | 'puck' | 'tina' | 'storyblok'
+type EditorMode = 'tiptap' | 'ckeditor' | 'puck' | 'tina' | 'storyblok' | 'sanity'
 
 interface RichTextEditorProps {
   content: string
@@ -55,7 +56,7 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Start
   useEffect(() => {
     fetch('/api/settings/public').then(r => r.ok ? r.json() : {}).then((data: Record<string, { value?: string }>) => {
       const choice = data.preferred_rich_text_editor?.value
-      if (choice === 'ckeditor' || choice === 'tiptap' || choice === 'puck' || choice === 'tina' || choice === 'storyblok') setSelectedEditor(choice)
+      if (choice === 'ckeditor' || choice === 'tiptap' || choice === 'puck' || choice === 'tina' || choice === 'storyblok' || choice === 'sanity') setSelectedEditor(choice)
     }).catch(() => {})
   }, [])
   useEffect(() => {
@@ -114,6 +115,7 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Start
         <option value="puck">Puck — visual page builder</option>
         <option value="tina">TinaCMS — CMS form editor</option>
         <option value="storyblok">Storyblok — connected headless CMS</option>
+        <option value="sanity">Sanity — connected headless CMS</option>
       </select>
       <span className="text-xs text-gray-600">The selection is per editing session; existing HTML remains available in the rich-text editors.</span>
     </div>
@@ -124,6 +126,7 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Start
   if (selectedEditor === 'puck') return <div className={className}>{chooser}<PuckEditorAdapter key={pageId || 'new-page'} content={editorContent} onChange={onChange} onPersist={onPersist} /></div>
   if (selectedEditor === 'tina') return <div className={className}>{chooser}<TinaCmsAdapter content={editorContent} onChange={onChange} onPersist={onPersist} /></div>
   if (selectedEditor === 'storyblok') return <div className={className}>{chooser}<StoryblokEditorAdapter content={content} title={pageTitle} slug={pageSlug} pageId={pageId} publish={publish} onChange={onChange} /></div>
+  if (selectedEditor === 'sanity') return <div className={className}>{chooser}<SanityEditorAdapter content={content} title={pageTitle} slug={pageSlug} pageId={pageId} publish={publish} onChange={onChange} /></div>
   if (selectedEditor === 'ckeditor') return <div className={className}>{chooser}<CkEditorAdapter content={editorContent} onChange={onChange} className="" placeholder={placeholder} /></div>
   if (!editor) return <div className={className}>{chooser}<div className="rich-text-editor"><div className="editor-loading">Loading editor…</div></div></div>
 

@@ -53,7 +53,7 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     const validatedData = updateSettingsSchema.parse(body)
     for (const item of validatedData.settings) {
-      if (item.key === 'preferred_rich_text_editor' && !['tiptap', 'ckeditor', 'puck', 'tina', 'storyblok'].includes(item.value)) {
+      if (item.key === 'preferred_rich_text_editor' && !['tiptap', 'ckeditor', 'puck', 'tina', 'storyblok', 'sanity'].includes(item.value)) {
         return NextResponse.json({ error: 'Invalid rich text editor preference' }, { status: 400 })
       }
     }

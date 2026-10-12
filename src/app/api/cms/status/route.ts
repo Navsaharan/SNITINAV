@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
+import { sanityStatus } from '@/lib/sanity'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -22,6 +23,7 @@ export async function GET() {
       htmlField: process.env.STORYBLOK_PAGE_HTML_FIELD || 'html_content',
       region: process.env.STORYBLOK_REGION || 'eu',
     },
+    sanity: await sanityStatus(),
     ckeditor: { available: true, licenseConfigured: Boolean(process.env.NEXT_PUBLIC_CKEDITOR_LICENSE_KEY) },
   })
 }

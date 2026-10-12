@@ -13,6 +13,7 @@ interface ExtendedUser {
   name?: string | null
 }
 import Link from 'next/link'
+import ApiConfiguration from '@/components/admin/api-configuration'
 
 interface SiteSettings {
   preferred_rich_text_editor: string
@@ -210,8 +211,9 @@ export default function AdminSettings() {
                     <option value="puck">Puck — drag-and-drop page builder</option>
                     <option value="tina">TinaCMS — CMS form editor</option>
                     <option value="storyblok">Storyblok — connected headless CMS</option>
+                    <option value="sanity">Sanity — connected headless CMS</option>
                   </select>
-                  <p className="mt-2 text-xs text-gray-500">Admins can change the editor for each edit session. TipTap, CKEditor, Puck, and TinaCMS use the current Page model; Storyblok requires server-side Storyblok credentials.</p>
+                  <p className="mt-2 text-xs text-gray-500">Admins can change the editor for each edit session. TipTap, CKEditor, Puck, and TinaCMS use the current Page model; Storyblok and Sanity use server-side credentials.</p>
                   <p className="text-xs text-gray-500 mt-1">Legacy HTML stays intact. Puck stores a versioned builder document in the same page field; Storyblok stores only a story reference there.</p>
                 </div>
                 <div>
@@ -327,6 +329,7 @@ export default function AdminSettings() {
             </div>
           )}
         </div>
+        <ApiConfiguration />
       </div>
     </AdminLayout>
   )

@@ -1,0 +1,10 @@
+import Image from 'next/image'
+import MainLayout from '@/components/layout/main-layout'
+import { prisma } from '@/lib/prisma'
+import { User } from 'lucide-react'
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+export default async function AdministrativeStaffPage() {
+  const staff = await prisma.faculty.findMany({ where: { staffType: 'ADMINISTRATIVE', isActive: true }, orderBy: [{ order: 'asc' }, { name: 'asc' }] })
+  return <MainLayout><main className="min-h-screen bg-gray-50 py-12"><div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8"><div className="mb-10 text-center"><h1 className="text-4xl font-bold text-gray-900">Administrative Staff</h1><p className="mx-auto mt-3 max-w-2xl text-gray-600">Meet the team supporting the institute’s day-to-day administration.</p></div>{staff.length === 0 ? <div className="rounded-lg bg-white p-12 text-center shadow-sm"><User className="mx-auto h-12 w-12 text-gray-400" /><p className="mt-4 text-gray-600">Administrative staff information will be displayed here once added by administrators.</p></div> : <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">{staff.map((member: typeof staff[number]) => <article key={member.id} className="overflow-hidden rounded-lg bg-white p-6 text-center shadow-sm"><div className="mx-auto mb-4 h-32 w-32 overflow-hidden rounded-full border-4 border-blue-100 bg-blue-50">{member.photoUrl ? <Image src={member.photoUrl} alt={member.name} width={128} height={128} className="h-full w-full object-cover" /> : <Image src="/images/faculty-placeholder.svg" alt={`${member.name} placeholder photo`} width={128} height={128} className="h-full w-full object-cover" />}</div><h2 className="text-xl font-bold text-gray-900">{member.name}</h2><p className="font-medium text-blue-600">{member.designation}</p>{member.department && <p className="mt-1 text-sm text-gray-500">{member.department}</p>}{member.bio && <p className="mt-4 text-sm leading-relaxed text-gray-600">{member.bio}</p>}</article>)}</div>}</div></main></MainLayout>
+}

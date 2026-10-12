@@ -11,7 +11,7 @@ export const authOptions = {
     maxAge: 30 * 24 * 60 * 60,
   },
   pages: {
-    signIn: "/auth/signin",
+    signIn: "/admin/login",
     signOut: "/auth/signout",
     error: "/auth/error",
   },

@@ -12,6 +12,7 @@ const publicImageUrlSchema = z.string().max(2048).refine((value) => !value || /^
 const facultyUpdateSchema = z.object({
   name: z.string().min(1, 'Name is required').optional(),
   designation: z.string().min(1, 'Designation is required').optional(),
+  staffType: z.enum(['FACULTY', 'ADMINISTRATIVE']).optional(),
   department: z.string().optional(),
   email: z.string().email().optional().or(z.literal('')),
   phone: z.string().optional(),
@@ -64,6 +65,7 @@ export async function PUT(
       data: {
         ...(validatedData.name && { name: validatedData.name }),
         ...(validatedData.designation && { designation: validatedData.designation }),
+        ...(validatedData.staffType !== undefined && { staffType: validatedData.staffType }),
         ...(validatedData.department !== undefined && { department: validatedData.department || null }),
         ...(validatedData.email !== undefined && { email: validatedData.email || null }),
         ...(validatedData.phone !== undefined && { phone: validatedData.phone || null }),

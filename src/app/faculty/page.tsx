@@ -33,7 +33,8 @@ async function getFacultyMembers(): Promise<FacultyMember[]> {
   try {
     const faculty = await prisma.faculty.findMany({
       where: {
-        isActive: true
+        isActive: true,
+        staffType: 'FACULTY'
       },
       orderBy: [
         { order: 'asc' },

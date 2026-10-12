@@ -11,6 +11,7 @@ const publicImageUrlSchema = z.string().max(2048).refine((value) => !value || /^
 const facultySchema = z.object({
   name: z.string().min(1, 'Name is required'),
   designation: z.string().min(1, 'Designation is required'),
+  staffType: z.enum(['FACULTY', 'ADMINISTRATIVE']).default('FACULTY'),
   department: z.string().optional(),
   email: z.string().email().optional().or(z.literal('')),
   phone: z.string().optional(),
@@ -58,6 +59,7 @@ export async function POST(request: NextRequest) {
       data: {
         name: validatedData.name,
         designation: validatedData.designation,
+        staffType: validatedData.staffType,
         department: validatedData.department || null,
         email: validatedData.email || null,
         phone: validatedData.phone || null,

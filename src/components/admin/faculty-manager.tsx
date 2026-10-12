@@ -10,6 +10,7 @@ interface Faculty {
   id: string
   name: string
   designation: string
+  staffType?: 'FACULTY' | 'ADMINISTRATIVE'
   department?: string
   email?: string
   phone?: string
@@ -395,6 +396,7 @@ function FacultyForm({ faculty, onSave, onCancel }: FacultyFormProps) {
   const [formData, setFormData] = useState({
     name: faculty?.name || '',
     designation: faculty?.designation || '',
+    staffType: faculty?.staffType || 'FACULTY',
     department: faculty?.department || '',
     email: faculty?.email || '',
     phone: faculty?.phone || '',
@@ -443,6 +445,14 @@ function FacultyForm({ faculty, onSave, onCancel }: FacultyFormProps) {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="staffType">Profile type</label>
+            <select id="staffType" value={formData.staffType} onChange={(e) => setFormData({ ...formData, staffType: e.target.value as 'FACULTY' | 'ADMINISTRATIVE' })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="FACULTY">Faculty</option>
+              <option value="ADMINISTRATIVE">Administrative staff</option>
+            </select>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

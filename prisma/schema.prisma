@@ -160,6 +160,7 @@ model Faculty {
   id          String   @id @default(cuid())
   name        String
   designation String
+  staffType   StaffType @default(FACULTY)
   department  String?
   email       String?
   phone       String?
@@ -171,6 +172,24 @@ model Faculty {
   updatedAt   DateTime @updatedAt
 
   @@map("faculty")
+}
+
+enum StaffType {
+  FACULTY
+  ADMINISTRATIVE
+}
+
+// Encrypted server-side integrations. Plaintext secrets are never returned by the API.
+model ApiCredential {
+  id              String   @id @default(cuid())
+  key             String   @unique
+  provider        String
+  encryptedValue  String
+  maskedValue     String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  lastUsedAt      DateTime?
+  @@map("api_credentials")
 }
 
 // Site settings and configuration
