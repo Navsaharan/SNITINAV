@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getToken } from 'next-auth/jwt'
 import { checkRateLimit, getRateLimitError } from './error-handler'
-import { recordAdminAudit } from './admin-audit'
 
 // Security headers configuration
 export const securityHeaders = {
@@ -188,30 +187,4 @@ export function validatePasswordStrength(password: string): { valid: boolean; er
   }
   
   return { valid: errors.length === 0, errors }
-}
-
-// Audit logging
-export interface AuditLog {
-  userId?: string
-  sessionId?: string
-  deviceId?: string
-  action: string
-  resource: string
-  details?: any
-  ip: string
-  userAgent: string
-  timestamp: Date
-}
-
-export async function logAuditEvent(log: Omit<AuditLog, 'timestamp'>): Promise<void> {
-  await recordAdminAudit({
-    userId: log.userId,
-    sessionId: log.sessionId,
-    action: log.action,
-    resource: log.resource,
-    details: log.details,
-    ipAddress: log.ip,
-    userAgent: log.userAgent,
-    deviceId: log.deviceId,
-  })
 }

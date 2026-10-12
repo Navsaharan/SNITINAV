@@ -12,10 +12,10 @@ import {
   requireAuth, 
   requireAdmin, 
   getClientIP, 
-  logAuditEvent,
   validateCSRFToken,
   generateCSRFToken
 } from './security'
+import { recordAdminAudit } from './admin-audit'
 
 export interface SecureApiOptions {
   requireAuth?: boolean
@@ -110,14 +110,14 @@ export function createSecureApi(
 
       // Persist an audit record for every protected mutation, plus explicitly audited reads.
       if (user && (options.logAudit || ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method))) {
-        await logAuditEvent({
+        await recordAdminAudit({
           userId: user.sub,
           sessionId: typeof user.sessionId === 'string' ? user.sessionId : undefined,
           deviceId: typeof user.deviceId === 'string' ? user.deviceId : undefined,
           action: request.method,
           resource: request.nextUrl.pathname,
           details: body ? { bodyKeys: Object.keys(body), query: Object.fromEntries(request.nextUrl.searchParams.entries()) } : { query: Object.fromEntries(request.nextUrl.searchParams.entries()) },
-          ip: clientIP,
+          ipAddress: clientIP,
           userAgent: request.headers.get('user-agent') || 'unknown',
         })
       }
