@@ -10,11 +10,11 @@ import { revalidatePublicContent } from '@/lib/revalidate-public-content'
 import { recordSessionAudit } from '@/lib/admin-audit'
 
 function storageAdmin() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
   return url && key ? createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } }) : null
 }
-async function requireAdmin() { const session = await getServerSession(authOptions); return session && (session.user as { role?: string }).role === 'ADMIN' ? session : null }
+async function requireAdmin() { const session = await getServerSession(authOptions); return session && String((session.user as { role?: string }).role || '').toUpperCase() === 'ADMIN' ? session : null }
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await requireAdmin(); if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

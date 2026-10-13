@@ -7,17 +7,9 @@ import { prisma } from '@/lib/prisma'
 import { revalidatePublicContent } from '@/lib/revalidate-public-content'
 import { makeStoryblokPageReference } from '@/lib/page-editor-content'
 import { recordSessionAudit } from '@/lib/admin-audit'
+import { storyblokConfig } from '@/lib/storyblok-config'
 
 export const runtime = 'nodejs'
-
-function storyblokClient() {
-  const oauthToken = process.env.STORYBLOK_MANAGEMENT_TOKEN
-  if (!oauthToken || !process.env.STORYBLOK_SPACE_ID) return null
-  return new StoryblokClient({
-    oauthToken,
-    region: (process.env.STORYBLOK_REGION || 'eu') as 'eu' | 'us' | 'ap' | 'ca' | 'cn',
-  })
-}
 
 async function requireEditor() {
   const session = await getServerSession(authOptions)
@@ -35,24 +27,23 @@ const saveSchema = z.object({
 
 export async function GET(request: NextRequest) {
   if (!(await requireEditor())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const client = storyblokClient()
-  if (!client) {
-    return NextResponse.json({ configured: false, error: 'Storyblok server settings are not configured.' }, { status: 503 })
+  const config = await storyblokConfig()
+  if (!config.spaceId || !config.managementToken) {
+    return NextResponse.json({ configured: false, missing: config.missing, error: 'Storyblok server settings are not configured.' }, { status: 503 })
   }
+  const client = new StoryblokClient({ oauthToken: config.managementToken, region: config.region })
   const slug = request.nextUrl.searchParams.get('slug')
   if (!slug || slug.length > 180) return NextResponse.json({ error: 'A valid story slug is required.' }, { status: 400 })
   try {
-    const spaceId = process.env.STORYBLOK_SPACE_ID!
-    const result = await client.get(`spaces/${spaceId}/stories`, { by_slugs: slug }) as any
+    const result = await client.get(`spaces/${config.spaceId}/stories`, { by_slugs: slug }) as any
     const listedStory = result?.data?.stories?.[0]
     if (!listedStory?.id) return NextResponse.json({ story: null })
-    const detail = await client.get(`spaces/${spaceId}/stories/${listedStory.id}`) as any
-    const field = process.env.STORYBLOK_PAGE_HTML_FIELD || 'html_content'
+    const detail = await client.get(`spaces/${config.spaceId}/stories/${listedStory.id}`) as any
     return NextResponse.json({
       storyId: listedStory.id,
       story: {
         title: detail?.data?.story?.name || listedStory.name,
-        content: detail?.data?.story?.content?.[field] || '',
+        content: detail?.data?.story?.content?.[config.htmlField] || '',
       },
     })
   } catch (error) {
@@ -64,9 +55,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const session = await requireEditor()
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const client = storyblokClient()
-  if (!client) return NextResponse.json({ error: 'Configure STORYBLOK_SPACE_ID, STORYBLOK_MANAGEMENT_TOKEN and STORYBLOK_PUBLIC_ACCESS_TOKEN on the server before using Storyblok.' }, { status: 503 })
-  if (!process.env.STORYBLOK_PUBLIC_ACCESS_TOKEN) return NextResponse.json({ error: 'Configure STORYBLOK_PUBLIC_ACCESS_TOKEN so the published website can render the Storyblok page.' }, { status: 503 })
+  const config = await storyblokConfig()
+  if (!config.spaceId || !config.managementToken) return NextResponse.json({ error: `Configure ${config.missing.join(', ')} before using Storyblok.` }, { status: 503 })
+  if (!config.publicAccessToken) return NextResponse.json({ error: 'Configure STORYBLOK_PUBLIC_ACCESS_TOKEN so the published website can render the Storyblok page.' }, { status: 503 })
+  const client = new StoryblokClient({ oauthToken: config.managementToken, region: config.region })
 
   try {
     const body = saveSchema.parse(await request.json())
@@ -75,20 +67,17 @@ export async function POST(request: NextRequest) {
       if (!page) return NextResponse.json({ error: 'Page not found.' }, { status: 404 })
     }
 
-    const spaceId = process.env.STORYBLOK_SPACE_ID!
-    const component = process.env.STORYBLOK_PAGE_COMPONENT || 'page'
-    const htmlField = process.env.STORYBLOK_PAGE_HTML_FIELD || 'html_content'
-    const listing = await client.get(`spaces/${spaceId}/stories`, { by_slugs: body.slug }) as any
+    const listing = await client.get(`spaces/${config.spaceId}/stories`, { by_slugs: body.slug }) as any
     const existing = listing?.data?.stories?.[0]
     const story = {
       ...(existing?.id ? { id: existing.id } : {}),
       name: body.title,
       slug: body.slug,
-      content: { component, [htmlField]: body.content },
+      content: { component: config.component, [config.htmlField]: body.content },
     }
     const saved = existing?.id
-      ? await client.put(`spaces/${spaceId}/stories/${existing.id}`, { story, publish: body.publish }) as any
-      : await client.post(`spaces/${spaceId}/stories`, { story, publish: body.publish }) as any
+      ? await client.put(`spaces/${config.spaceId}/stories/${existing.id}`, { story, publish: body.publish }) as any
+      : await client.post(`spaces/${config.spaceId}/stories`, { story, publish: body.publish }) as any
     const storyId = saved?.data?.story?.id || existing?.id
     if (!storyId) throw new Error('Storyblok did not return a story id')
 

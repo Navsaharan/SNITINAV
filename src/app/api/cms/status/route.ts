@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { sanityStatus } from '@/lib/sanity'
+import { storyblokConfig } from '@/lib/storyblok-config'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -9,20 +10,16 @@ export async function GET() {
   if (!session || !['ADMIN', 'EDITOR'].includes(role)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-  const storyblokRequirements = [
-    ['STORYBLOK_SPACE_ID', process.env.STORYBLOK_SPACE_ID],
-    ['STORYBLOK_MANAGEMENT_TOKEN', process.env.STORYBLOK_MANAGEMENT_TOKEN],
-    ['STORYBLOK_PUBLIC_ACCESS_TOKEN', process.env.STORYBLOK_PUBLIC_ACCESS_TOKEN],
-  ] as const
+  const storyblok = await storyblokConfig()
   return NextResponse.json({
     puck: { available: true, storage: 'Prisma Page.content' },
     tina: { available: true, storage: 'Prisma Page.content' },
     storyblok: {
-      available: storyblokRequirements.every(([, value]) => Boolean(value)),
-      missing: storyblokRequirements.filter(([, value]) => !value).map(([key]) => key),
-      component: process.env.STORYBLOK_PAGE_COMPONENT || 'page',
-      htmlField: process.env.STORYBLOK_PAGE_HTML_FIELD || 'html_content',
-      region: process.env.STORYBLOK_REGION || 'eu',
+      available: storyblok.available,
+      missing: storyblok.missing,
+      component: storyblok.component,
+      htmlField: storyblok.htmlField,
+      region: storyblok.region,
     },
     sanity: await sanityStatus(),
     ckeditor: { available: true, licenseConfigured: Boolean(process.env.NEXT_PUBLIC_CKEDITOR_LICENSE_KEY) },

@@ -23,7 +23,7 @@ const ALLOWED_TYPES: Record<string, string> = {
 }
 
 function getStorageAdmin() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!url || !key) {
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 
-    if (!session || (session as any).user?.role !== 'ADMIN') {
+    if (!session || String((session as any).user?.role || '').toUpperCase() !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 
-    if (!session || (session as any).user?.role !== 'ADMIN' || !(session as any).user?.id) {
+    if (!session || String((session as any).user?.role || '').toUpperCase() !== 'ADMIN' || !(session as any).user?.id) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }

@@ -7,7 +7,7 @@ import { prisma } from '@/lib/prisma'
 import { recordSessionAudit } from '@/lib/admin-audit'
 
 const schema = z.object({
-  provider: z.enum(['sanity']),
+  provider: z.enum(['sanity', 'storyblok']),
   credentials: z.record(z.string().min(1).max(500)).refine((value) => Object.keys(value).length > 0),
 })
 
@@ -46,7 +46,7 @@ export async function DELETE(request: NextRequest) {
   const session = await admin(request)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const key = request.nextUrl.searchParams.get('key')
-  if (!key || !/^sanity\.[a-zA-Z0-9_]+$/.test(key)) return NextResponse.json({ error: 'Invalid credential key' }, { status: 400 })
+  if (!key || !/^(sanity|storyblok)\.[a-zA-Z0-9_]+$/.test(key)) return NextResponse.json({ error: 'Invalid credential key' }, { status: 400 })
   await prisma.apiCredential.deleteMany({ where: { key } })
   await recordSessionAudit(request, session, 'DELETE', '/api/settings/api-credentials', { key })
   return NextResponse.json({ deleted: true })
