@@ -7,7 +7,7 @@
     "dev": "next dev",
     "prisma:generate": "npx prisma generate",
     "build": "npm run prisma:generate && next build",
-    "build:prod": "cross-env NODE_ENV=production npm run prisma:generate && next build",
+    "build:prod": "NODE_ENV=production npm run prisma:generate && next build",
     "start": "next start",
     "start:prod": "cross-env NODE_ENV=production next start",
     "lint": "next lint",
