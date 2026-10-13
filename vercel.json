@@ -1,7 +1,7 @@
 {
   "version": 2,
   "buildCommand": "npm run build:prod",
-  "installCommand": "npm ci",
+  "installCommand": "npm ci --include=dev",
   "framework": "nextjs",
   "regions": ["bom1"],
   "headers": [
