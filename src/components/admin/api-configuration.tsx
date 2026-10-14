@@ -34,7 +34,16 @@ export default function ApiConfiguration() {
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
-  const load = () => fetch('/api/settings/api-credentials', { cache: 'no-store' }).then(r => r.json()).then(result => setSaved(result.credentials || [])).catch(() => setError('Could not load API configuration'))
+  const load = async () => {
+    try {
+      const response = await fetch('/api/settings/api-credentials', { cache: 'no-store' })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result.error || `Could not load API configuration (${response.status})`)
+      setSaved(result.credentials || [])
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Could not load API configuration')
+    }
+  }
   useEffect(() => { void load() }, [])
 
   const save = async (provider: Provider) => {
@@ -63,7 +72,7 @@ export default function ApiConfiguration() {
         <h4 className="font-medium text-gray-900">{group.title}</h4>
         <div className="mt-4 space-y-3">{group.fields.map(([key, label]) => <div key={key}>
           <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor={`api-${key}`}>{label}</label>
-          <input id={`api-${key}`} type={key.includes('TOKEN') ? 'password' : 'text'} value={values[key] || ''} onChange={e => setValues(prev => ({ ...prev, [key]: e.target.value }))} placeholder={saved.find(item => item.key === `${group.provider}.${key.toLowerCase()}`)?.maskedValue || 'Not configured'} autoComplete="new-password" className="w-full rounded border border-gray-300 px-3 py-2" />
+          <input id={`api-${key}`} type={key.includes('TOKEN') ? 'password' : 'text'} value={values[key] || ''} onChange={e => setValues(prev => ({ ...prev, [key]: e.target.value }))} placeholder={saved.find(item => item.key.toLowerCase() === `${group.provider}.${key.toLowerCase()}`)?.maskedValue || 'Not configured'} autoComplete="new-password" className="w-full rounded border border-gray-300 px-3 py-2" />
         </div>)}</div>
         <button type="button" onClick={() => void save(group.provider)} disabled={saving} className="mt-4 rounded bg-amber-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50">{saving ? 'Saving…' : `Save ${group.title} configuration`}</button>
       </div>)}

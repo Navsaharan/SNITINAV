@@ -29,9 +29,11 @@ export function maskCredential(value: string): string {
 }
 
 export async function getCredential(key: string): Promise<string | null> {
-  const item = await prisma.apiCredential.findUnique({ where: { key } })
+  const item = await prisma.apiCredential.findFirst({
+    where: { OR: [{ key }, { key: key.replace(/\.([^.]*)$/, (_, suffix: string) => `.${suffix.toUpperCase()}`) }] },
+  })
   if (!item) return null
-  await prisma.apiCredential.update({ where: { key }, data: { lastUsedAt: new Date() } })
+  await prisma.apiCredential.update({ where: { key: item.key }, data: { lastUsedAt: new Date() } })
   return decryptCredential(item.encryptedValue)
 }
 

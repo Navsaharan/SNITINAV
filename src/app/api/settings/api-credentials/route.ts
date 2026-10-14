@@ -13,7 +13,7 @@ const schema = z.object({
 
 async function admin(request: NextRequest) {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user as { role?: string }).role !== 'ADMIN') return null
+  if (!session || String((session.user as { role?: string }).role || '').toUpperCase() !== 'ADMIN') return null
   return session
 }
 
@@ -28,11 +28,14 @@ export async function PUT(request: NextRequest) {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   try {
     const body = schema.parse(await request.json())
-    await prisma.$transaction(Object.entries(body.credentials).map(([key, value]) => prisma.apiCredential.upsert({
-      where: { key: `${body.provider}.${key}` },
+    await prisma.$transaction(Object.entries(body.credentials).map(([key, value]) => {
+      const normalizedKey = key.toLowerCase()
+      return prisma.apiCredential.upsert({
+      where: { key: `${body.provider}.${normalizedKey}` },
       update: { encryptedValue: encryptCredential(value), maskedValue: maskCredential(value), provider: body.provider },
-      create: { key: `${body.provider}.${key}`, provider: body.provider, encryptedValue: encryptCredential(value), maskedValue: maskCredential(value) },
-    })))
+      create: { key: `${body.provider}.${normalizedKey}`, provider: body.provider, encryptedValue: encryptCredential(value), maskedValue: maskCredential(value) },
+      })
+    }))
     await recordSessionAudit(request, session, 'UPDATE', '/api/settings/api-credentials', { provider: body.provider, keys: Object.keys(body.credentials) })
     return NextResponse.json({ saved: true, credentials: await listCredentialMetadata() }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error) {
