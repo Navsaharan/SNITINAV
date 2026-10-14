@@ -16,16 +16,19 @@ globalThis.requestAnimationFrame = browser.requestAnimationFrame.bind(browser)
 globalThis.cancelAnimationFrame = browser.cancelAnimationFrame.bind(browser)
 
 const ckeditor = await import('ckeditor5')
-const pluginNames = ['ClassicEditor', 'Essentials', 'Paragraph', 'Heading', 'Bold', 'Italic', 'Underline', 'Link', 'List', 'BlockQuote', 'Table', 'TableToolbar', 'Image', 'ImageToolbar', 'ImageCaption', 'ImageStyle', 'ImageUpload', 'MediaEmbed', 'CodeBlock', 'Alignment']
+const pluginNames = ['ClassicEditor', 'Essentials', 'Paragraph', 'Heading', 'Bold', 'Italic', 'Underline', 'Strikethrough', 'Link', 'List', 'BlockQuote', 'Table', 'TableToolbar', 'Image', 'ImageToolbar', 'ImageCaption', 'ImageStyle', 'ImageUpload', 'MediaEmbed', 'CodeBlock', 'Alignment', 'Font', 'FontFamily', 'FontSize', 'FontColor', 'FontBackgroundColor', 'GeneralHtmlSupport']
 for (const name of pluginNames) assert.ok(name in ckeditor, `CKEditor export ${name} is missing`)
 
 const editor = await ckeditor.ClassicEditor.create(document.querySelector('#editor'), {
   licenseKey: 'GPL',
   plugins: pluginNames.filter(name => name !== 'ClassicEditor').map(name => ckeditor[name]),
-  toolbar: ['undo', 'redo', 'heading', 'bold', 'italic', 'underline', 'link', 'bulletedList', 'numberedList', 'blockQuote', 'insertTable', 'uploadImage', 'mediaEmbed', 'codeBlock', 'alignment'],
+  toolbar: ['undo', 'redo', 'heading', 'fontFamily', 'fontSize', 'bold', 'italic', 'underline', 'strikethrough', 'fontColor', 'fontBackgroundColor', 'link', 'bulletedList', 'numberedList', 'blockQuote', 'insertTable', 'uploadImage', 'mediaEmbed', 'codeBlock', 'alignment'],
   table: { contentToolbar: ['tableColumn', 'tableRow', 'mergeTableCells'] },
   image: { toolbar: ['imageTextAlternative', 'imageStyle:inline', 'imageStyle:block', 'imageStyle:side'] },
   mediaEmbed: { previewsInData: true },
+  fontFamily: { supportAllValues: true },
+  fontSize: { options: [9, 11, 13, 'default', 17, 19, 21, 27, 35], supportAllValues: true },
+  htmlSupport: { allow: [{ name: /^(?!script$|style$).*$/, attributes: true, classes: true, styles: true }] },
 })
 assert.match(editor.getData(), /CKEditor runtime smoke test/)
 await editor.destroy()

@@ -9,6 +9,7 @@ import PageSidebar from '@/components/page/page-sidebar'
 import { parseSanityPageReference, parseStoryblokPageReference } from '@/lib/page-editor-content'
 import { getPublishedStoryblokPage } from '@/lib/storyblok-pages'
 import { getSanityPage } from '@/lib/sanity'
+import { sanitizePageHtml } from '@/lib/sanitize-page-html'
 
 export const revalidate = 60
 
@@ -143,7 +144,8 @@ export default async function DynamicPage({ params }: PageProps) {
   }
   if (sanitySlug) {
     try {
-      renderedPageContent = (await getSanityPage(sanitySlug))?.content || '<p>Page content is temporarily unavailable.</p>'
+      const sanityContent = (await getSanityPage(sanitySlug))?.content
+      renderedPageContent = sanityContent ? sanitizePageHtml(sanityContent) : '<p>Page content is temporarily unavailable.</p>'
     } catch (error) {
       console.error('Could not load published Sanity page:', error instanceof Error ? error.message : 'unknown error')
       renderedPageContent = '<p>Page content is temporarily unavailable.</p>'
