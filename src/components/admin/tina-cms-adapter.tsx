@@ -34,6 +34,12 @@ function TinaPageForm({ content, onChange, onPersist, cms }: Props & { cms: Tina
     return () => { cms.forms.remove(form) }
   }, [cms, form])
 
+  useEffect(() => {
+    setDraft(content)
+    form.change('content', content)
+    setNotice('')
+  }, [content, form])
+
   const updateDraft = (value: string) => {
     setDraft(value)
     form.change('content', value)

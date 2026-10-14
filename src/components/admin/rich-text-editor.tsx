@@ -202,7 +202,9 @@ function CkEditorAdapter({ content, onChange, className, placeholder }: { conten
   const p = modules.plugins
   const attachAdminUploadAdapter = (editor: any) => {
     const repository = editor.plugins.get('FileRepository')
-    repository.createUploadAdapter = (loader: { file: Promise<File> }) => ({
+    repository.createUploadAdapter = (loader: { file: Promise<File> }) => {
+      const controller = new AbortController()
+      return {
       upload: async () => {
         const file = await loader.file
         const form = new FormData()
@@ -210,13 +212,14 @@ function CkEditorAdapter({ content, onChange, className, placeholder }: { conten
         form.append('category', 'GENERAL')
         form.append('alt', file.name)
         form.append('isPublic', 'true')
-        const response = await fetch('/api/media', { method: 'POST', body: form })
-        const result = await response.json()
+        const response = await fetch('/api/media', { method: 'POST', body: form, signal: controller.signal })
+        const result = await response.json().catch(() => ({}))
         if (!response.ok || typeof result.url !== 'string' || !result.url) throw new Error(result.error || 'Image upload failed')
         return { default: result.url }
       },
-      abort: () => undefined,
-    })
+        abort: () => controller.abort(),
+      }
+    }
   }
   const config = {
     licenseKey: process.env.NEXT_PUBLIC_CKEDITOR_LICENSE_KEY || 'GPL',
@@ -228,5 +231,5 @@ function CkEditorAdapter({ content, onChange, className, placeholder }: { conten
     image: { toolbar: ['imageTextAlternative', 'imageStyle:inline', 'imageStyle:block', 'imageStyle:side'] },
     mediaEmbed: { previewsInData: true },
   }
-  return <div className={`rich-text-editor ckeditor-adapter ${className}`}><p className="mb-2 text-xs text-gray-500">CKEditor 5 · formatting, tables, links, uploaded images, media embeds, code blocks and undo/redo</p><Editor editor={ClassicEditor} data={content || ''} config={config} onChange={(_: unknown, editor: { getData: () => string }) => onChange(editor.getData())} /></div>
+  return <div className={`rich-text-editor ckeditor-adapter ${className}`}><p className="mb-2 text-xs text-gray-500">CKEditor 5 · formatting, tables, links, uploaded images, media embeds, code blocks and undo/redo</p><Editor editor={ClassicEditor} data={content || ''} config={config} onChange={(_: unknown, editor: { getData: () => string }) => onChange(editor.getData())} onError={(error: any, details: any) => { if (!details?.willEditorRestart) { console.error('CKEditor runtime error:', error); setLoadError(error?.message || 'CKEditor encountered a runtime error. Try refreshing the page.') } }} /></div>
 }

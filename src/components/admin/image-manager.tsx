@@ -48,6 +48,7 @@ export default function ImageManager({
   const [searchTerm, setSearchTerm] = useState('')
   const [filterCategory, setFilterCategory] = useState(category)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [error, setError] = useState('')
 
   const categories = [
     { value: 'all', label: 'All Categories' },
@@ -64,16 +65,21 @@ export default function ImageManager({
     fetchMedia()
   }, [])
 
+  useEffect(() => {
+    setFilterCategory(category === 'all' ? 'all' : category.toUpperCase())
+  }, [category])
+
   const fetchMedia = async () => {
     try {
       setLoading(true)
+      setError('')
       const response = await fetch('/api/media')
-      if (response.ok) {
-        const data = await response.json()
-        setMedia(data.media || [])
-      }
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.error || 'Could not load images')
+      setMedia(data.media || [])
     } catch (error) {
       console.error('Error fetching media:', error)
+      setError(error instanceof Error ? error.message : 'Could not load images')
     } finally {
       setLoading(false)
     }
@@ -196,7 +202,9 @@ export default function ImageManager({
           </div>
         </div>
 
-        {/* Filters */}
+      {error && <p role="alert" className="mx-6 mt-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+
+      {/* Filters */}
         <div className="mt-4 flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">

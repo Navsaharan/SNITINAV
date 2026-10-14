@@ -21,6 +21,7 @@ const ALLOWED_TYPES: Record<string, string> = {
   'image/webp': 'webp',
   'application/pdf': 'pdf',
 }
+const ALLOWED_CATEGORIES = new Set(['GENERAL', 'FACULTY', 'INFRASTRUCTURE', 'EVENTS', 'GALLERY', 'DOCUMENTS', 'CERTIFICATES', 'ACHIEVEMENTS'])
 
 function getStorageAdmin() {
   const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
@@ -72,7 +73,7 @@ export async function GET(request: NextRequest) {
       prisma.media.count(),
     ])
 
-    const storageAdmin = getStorageAdmin()
+    let storageAdmin: ReturnType<typeof getStorageAdmin> | null = null
 
     // Generate temporary links for privately stored PDFs.
     const mediaWithUrls = await Promise.all(
@@ -91,6 +92,14 @@ export async function GET(request: NextRequest) {
         const bucket = storageReference.slice(0, separator)
         const path = storageReference.slice(separator + 1)
 
+        if (!storageAdmin) {
+          try {
+            storageAdmin = getStorageAdmin()
+          } catch (error) {
+            console.error('Could not resolve private media URL:', error)
+            return { ...item, url: '' }
+          }
+        }
         const { data, error } = await storageAdmin.storage
           .from(bucket)
           .createSignedUrl(path, 3600)
@@ -144,9 +153,13 @@ export async function POST(request: NextRequest) {
 
     const alt = String(formData.get('alt') || '')
     const caption = String(formData.get('caption') || '')
-    const category = String(formData.get('category') || 'GENERAL')
+    const category = String(formData.get('category') || 'GENERAL').toUpperCase()
     const tags = String(formData.get('tags') || '')
     const isPublic = file?.type.startsWith('image/') && formData.get('isPublic') === 'true'
+
+    if (!ALLOWED_CATEGORIES.has(category)) {
+      return NextResponse.json({ error: 'Invalid media category.' }, { status: 400 })
+    }
 
     if (!file) {
       return NextResponse.json(
