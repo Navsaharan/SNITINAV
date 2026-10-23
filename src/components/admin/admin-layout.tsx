@@ -20,6 +20,7 @@ import {
   TestTube,
   Navigation,
   ClipboardList,
+  Activity,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -43,6 +44,7 @@ const navigation = [
   { name: 'Images', href: '/admin/images', icon: ImageIcon },
   { name: 'Faculty', href: '/admin/faculty', icon: Users },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
+  { name: 'API Manager', href: '/admin/api-manager', icon: Activity },
   { name: 'Colors', href: '/admin/colors', icon: Palette },
   { name: 'Password', href: '/admin/password', icon: Lock },
   { name: 'Users', href: '/admin/users', icon: Users },
