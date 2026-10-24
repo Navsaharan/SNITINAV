@@ -76,6 +76,7 @@ export default function MediaManagement() {
   }
 
   const handleUpload = async (files: File[], metadata: { category: string; tags: string; alt: string; caption: string; isPublic: boolean }) => {
+    const failures: string[] = []
     for (const file of files) {
       const formData = new FormData()
       formData.append('file', file)
@@ -97,12 +98,15 @@ export default function MediaManagement() {
         }
       } catch (error) {
         console.error('Upload error:', error)
-        alert(`Failed to upload ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        failures.push(`${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`)
       }
     }
 
     // Refresh media list
     await fetchMedia()
+    if (failures.length > 0) {
+      throw new Error(`Some files could not be uploaded:\n${failures.join('\n')}`)
+    }
   }
 
   const handleDelete = async (mediaId: string) => {

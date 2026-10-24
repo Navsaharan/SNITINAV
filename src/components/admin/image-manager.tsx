@@ -86,6 +86,7 @@ export default function ImageManager({
   }
 
   const handleUpload = async (files: File[], metadata: any) => {
+    const failures: string[] = []
     for (const file of files) {
       const formData = new FormData()
       formData.append('file', file)
@@ -107,11 +108,14 @@ export default function ImageManager({
         }
       } catch (error) {
         console.error('Upload error:', error)
-        alert(`Failed to upload ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`)
+        failures.push(`${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}`)
       }
     }
 
     await fetchMedia()
+    if (failures.length > 0) {
+      throw new Error(`Some files could not be uploaded:\n${failures.join('\n')}`)
+    }
     setShowUploadModal(false)
   }
 
