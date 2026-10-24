@@ -6,6 +6,9 @@ const allowedTags = Array.from(new Set([
   'hr', 'pre', 'code', 'u', 's', 'del', 'ins', 'sup', 'sub', 'section', 'div', 'span', 'iframe', 'video',
 ]))
 
+const safeColor = /^(#[0-9a-f]{3,8}|rgba?\([0-9.,%\s]+\)|hsla?\([0-9.,%\s]+\)|(black|white|red|green|blue|yellow|orange|purple|gray|grey|transparent))$/i
+const safeLength = /^\d+(\.\d+)?(px|%|em|rem|vh|vw)$/
+
 export function sanitizePageHtml(html: string): string {
   return sanitizeHtml(html, {
     allowedTags,
@@ -25,15 +28,19 @@ export function sanitizePageHtml(html: string): string {
     allowedIframeHostnames: ['www.youtube.com', 'youtube.com', 'www.youtube-nocookie.com', 'player.vimeo.com'],
     allowedStyles: {
       '*': {
-        color: [/^#[0-9a-f]{3,8}$/i, /^rgba?\([0-9.,%\s]+\)$/i],
-        'background-color': [/^#[0-9a-f]{3,8}$/i, /^rgba?\([0-9.,%\s]+\)$/i],
+        color: [safeColor],
+        'background-color': [safeColor],
         'text-align': [/^(left|right|center|justify)$/],
         'font-weight': [/^(normal|bold|[1-9]00)$/],
         'font-style': [/^(normal|italic)$/],
         'text-decoration': [/^(none|underline|line-through)$/],
-        width: [/^\d+(\.\d+)?(px|%|em|rem)$/],
-        height: [/^\d+(\.\d+)?(px|%|em|rem)$/],
-        'max-width': [/^\d+(\.\d+)?(px|%|em|rem)$/],
+        'font-size': [safeLength],
+        padding: [safeLength],
+        margin: [safeLength],
+        width: [safeLength],
+        height: [safeLength],
+        'max-width': [safeLength],
+        'border-radius': [safeLength],
       },
     },
     transformTags: {

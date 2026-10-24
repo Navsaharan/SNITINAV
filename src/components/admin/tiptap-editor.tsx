@@ -7,6 +7,10 @@ import Image from '@tiptap/extension-image'
 import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import TextAlign from '@tiptap/extension-text-align'
+import Color from '@tiptap/extension-color'
+import Highlight from '@tiptap/extension-highlight'
+import TextStyle from '@tiptap/extension-text-style'
+import { Extension } from '@tiptap/core'
 import Underline from '@tiptap/extension-underline'
 import Table from '@tiptap/extension-table'
 import TableRow from '@tiptap/extension-table-row'
@@ -32,6 +36,22 @@ function ToolbarButton({ label, active, onClick, children }: { label: string; ac
   return <button type="button" title={label} aria-label={label} onClick={onClick} className={`editor-toolbar-button${active ? ' is-active' : ''}`}>{children}</button>
 }
 
+const FontSize = Extension.create({
+  name: 'fontSize',
+  addGlobalAttributes() {
+    return [{
+      types: ['textStyle'],
+      attributes: {
+        fontSize: {
+          default: null,
+          parseHTML: (element: HTMLElement) => element.style.fontSize || null,
+          renderHTML: (attributes: { fontSize?: string | null }) => attributes.fontSize ? { style: `font-size: ${attributes.fontSize}` } : {},
+        },
+      },
+    }]
+  },
+})
+
 export default function TipTapEditor({ content, onChange, placeholder, preview, onTogglePreview, chooser, className }: Props) {
   const extensions = useMemo(() => [
     StarterKit.configure({ codeBlock: { HTMLAttributes: { class: 'editor-code-block' } } }),
@@ -40,6 +60,7 @@ export default function TipTapEditor({ content, onChange, placeholder, preview, 
     Link.configure({ openOnClick: false, HTMLAttributes: { rel: 'noopener noreferrer', target: '_blank' } }),
     Placeholder.configure({ placeholder }),
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
+    TextStyle, Color, Highlight.configure({ multicolor: true }), FontSize,
     Table.configure({ resizable: true }), TableRow, TableHeader, TableCell,
   ], [placeholder])
 
@@ -89,6 +110,11 @@ export default function TipTapEditor({ content, onChange, placeholder, preview, 
         <ToolbarButton label="Align left" onClick={() => editor.chain().focus().setTextAlign('left').run()}><AlignLeft size={16} /></ToolbarButton>
         <ToolbarButton label="Align center" onClick={() => editor.chain().focus().setTextAlign('center').run()}><AlignCenter size={16} /></ToolbarButton>
         <ToolbarButton label="Align right" onClick={() => editor.chain().focus().setTextAlign('right').run()}><AlignRight size={16} /></ToolbarButton>
+        <label className="editor-toolbar-button" title="Text color">Text <input aria-label="Text color" type="color" value={editor.getAttributes('textStyle').color || '#000000'} onChange={(event) => editor.chain().focus().setColor(event.target.value).run()} /></label>
+        <label className="editor-toolbar-button" title="Highlight color">Highlight <input aria-label="Highlight color" type="color" value={editor.getAttributes('highlight').color || '#ffff00'} onChange={(event) => editor.chain().focus().toggleHighlight({ color: event.target.value }).run()} /></label>
+        <select aria-label="Font size" className="editor-heading-select" defaultValue="" onChange={(event) => { const value = event.target.value; if (value) editor.chain().focus().setMark('textStyle', { fontSize: value }).run() }}>
+          <option value="">Font size</option><option value="12px">12px</option><option value="16px">16px</option><option value="20px">20px</option><option value="28px">28px</option>
+        </select>
       </div>
       <div className="editor-toolbar-group editor-toolbar-group-end">
         <ToolbarButton label="Insert link" active={editor.isActive('link')} onClick={addLink}><LinkIcon size={16} /></ToolbarButton>

@@ -7,6 +7,7 @@ import { Render as PuckRender } from '@puckeditor/core'
 import { parsePuckPageContent, parseStoryblokPageReference, PUCK_PAGE_PREFIX } from '@/lib/page-editor-content'
 import { pageBuilderConfig } from '@/lib/puck-page-config'
 import FeedbackForm from '@/components/forms/feedback-form'
+import { sanitizePageHtml } from '@/lib/sanitize-page-html'
 
 interface ContentRendererProps {
   content: string
@@ -100,7 +101,7 @@ export default function ContentRenderer({ content, type = 'HTML', data }: Conten
             '--tw-prose-th-borders': 'var(--color-border)',
             '--tw-prose-td-borders': 'var(--color-border)',
           } as React.CSSProperties}
-          dangerouslySetInnerHTML={{ __html: content }}
+          dangerouslySetInnerHTML={{ __html: sanitizePageHtml(content) }}
         />
       )
 
@@ -394,7 +395,7 @@ export default function ContentRenderer({ content, type = 'HTML', data }: Conten
       return (
         <div
           className="prose prose-lg max-w-none"
-          dangerouslySetInnerHTML={{ __html: content }}
+          dangerouslySetInnerHTML={{ __html: sanitizePageHtml(content) }}
         />
       )
   }

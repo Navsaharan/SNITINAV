@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import type { Config } from '@puckeditor/core'
+import { sanitizePageHtml } from '@/lib/sanitize-page-html'
 
 type PageBuilderProps = {
   Heading: { text: string; level: string }
@@ -52,7 +53,7 @@ export const pageBuilderConfig: Config<PageBuilderProps> = {
       label: 'Legacy HTML (preserve existing content)',
       fields: { html: { type: 'textarea', label: 'HTML content' } },
       defaultProps: { html: '<p>Existing content</p>' },
-      render: ({ html }) => <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: html }} />,
+      render: ({ html }) => <div className="prose max-w-none" dangerouslySetInnerHTML={{ __html: sanitizePageHtml(html) }} />,
     },
     Image: {
       label: 'Image',
