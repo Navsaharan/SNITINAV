@@ -3,6 +3,7 @@ import Image from 'next/image'
 import MainLayout from '@/components/layout/main-layout'
 import { Mail, Phone, Calendar, Award, GraduationCap, User } from 'lucide-react'
 import { prisma } from '@/lib/prisma'
+import { resolveMediaUrl } from '@/lib/media-url'
 
 // Force dynamic rendering to avoid build-time database issues
 export const dynamic = 'force-dynamic'
@@ -41,7 +42,10 @@ async function getFacultyMembers(): Promise<FacultyMember[]> {
         { name: 'asc' }
       ]
     })
-    return faculty
+    return Promise.all(faculty.map(async (member: typeof faculty[number]) => ({
+      ...member,
+      photoUrl: member.photoUrl ? (await resolveMediaUrl(member.photoUrl)) || undefined : undefined,
+    })))
   } catch (error) {
     console.error('Error fetching faculty:', error)
     return []

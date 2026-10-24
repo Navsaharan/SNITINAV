@@ -3,6 +3,7 @@ import MainLayout from '@/components/layout/main-layout'
 import Breadcrumbs from '@/components/ui/breadcrumbs'
 import { prisma } from '@/lib/prisma'
 import EnhancedGallery from '@/components/gallery/enhanced-gallery'
+import { resolveMediaUrl } from '@/lib/media-url'
 
 // Force dynamic rendering to avoid build-time database issues
 export const dynamic = 'force-dynamic'
@@ -31,7 +32,7 @@ export default async function GalleryPage() {
   }> = []
 
   try {
-    galleryImages = await prisma.media.findMany({
+    const media = await prisma.media.findMany({
       where: {
         mimeType: {
           startsWith: 'image/',
@@ -44,6 +45,10 @@ export default async function GalleryPage() {
       },
       take: 100, // Increased limit for better gallery experience
     })
+    galleryImages = await Promise.all(media.map(async (image: typeof media[number]) => ({
+      ...image,
+      url: await resolveMediaUrl(image.url),
+    })))
   } catch (error) {
     console.error('Error fetching gallery images:', error)
     // Return empty array if database is not available during build
