@@ -96,25 +96,23 @@ export function canManagePages(role: unknown): boolean {
   return hasRole(role, ['ADMIN', 'EDITOR'])
 }
 
+export async function requireRole(request: NextRequest, allowedRoles: string[]): Promise<NextResponse | null> {
+  const token = await getToken({ req: request })
+
+  if (!token) {
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
+  }
+
+  if (!hasRole(token.role, allowedRoles)) {
+    return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
+  }
+
+  return null
+}
+
 // Admin authentication middleware
 export async function requireAdmin(request: NextRequest): Promise<NextResponse | null> {
-  const token = await getToken({ req: request })
-  
-  if (!token) {
-    return NextResponse.json(
-      { error: 'Authentication required' },
-      { status: 401 }
-    )
-  }
-  
-  if (!hasRole(token.role, ['ADMIN'])) {
-    return NextResponse.json(
-      { error: 'Admin access required' },
-      { status: 403 }
-    )
-  }
-  
-  return null
+  return requireRole(request, ['ADMIN'])
 }
 
 // CSRF token generation and validation

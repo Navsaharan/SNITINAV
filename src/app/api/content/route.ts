@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { recordSessionAudit } from '@/lib/admin-audit'
+import { requireRole } from '@/lib/security'
+import { sanitizePageHtml } from '@/lib/sanitize-page-html'
 
 
 const createContentSchema = z.object({
@@ -18,10 +20,9 @@ const createContentSchema = z.object({
 // GET /api/content - List content blocks
 export async function GET(request: NextRequest) {
   try {
+    const roleError = await requireRole(request, ['ADMIN', 'EDITOR'])
+    if (roleError) return roleError
     const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
 
     const { searchParams } = new URL(request.url)
     const pageId = searchParams.get('pageId')
@@ -54,13 +55,15 @@ export async function GET(request: NextRequest) {
 // POST /api/content - Create new content block
 export async function POST(request: NextRequest) {
   try {
+    const roleError = await requireRole(request, ['ADMIN', 'EDITOR'])
+    if (roleError) return roleError
     const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
 
     const body = await request.json()
-    const validatedData = createContentSchema.parse(body)
+    const validatedData = createContentSchema.parse({
+      ...body,
+      content: typeof body.content === 'string' ? sanitizePageHtml(body.content) : body.content,
+    })
 
     // Check if page exists
     const page = await prisma.page.findUnique({

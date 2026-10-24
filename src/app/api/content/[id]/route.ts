@@ -4,6 +4,8 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { recordSessionAudit } from '@/lib/admin-audit'
+import { requireRole } from '@/lib/security'
+import { sanitizePageHtml } from '@/lib/sanitize-page-html'
 
 const updateContentSchema = z.object({
   type: z.enum(['TEXT', 'HTML', 'IMAGE', 'GALLERY', 'SLIDESHOW', 'TABLE', 'LIST', 'CONTACT_INFO', 'DOWNLOAD']).optional(),
@@ -19,10 +21,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const roleError = await requireRole(request, ['ADMIN', 'EDITOR'])
+    if (roleError) return roleError
     const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
 
     const { id } = await params
     const content = await prisma.content.findUnique({
@@ -54,14 +55,16 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const roleError = await requireRole(request, ['ADMIN', 'EDITOR'])
+    if (roleError) return roleError
     const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
 
     const { id } = await params
     const body = await request.json()
-    const validatedData = updateContentSchema.parse(body)
+    const validatedData = updateContentSchema.parse({
+      ...body,
+      content: typeof body.content === 'string' ? sanitizePageHtml(body.content) : body.content,
+    })
 
     // Check if content exists
     const existingContent = await prisma.content.findUnique({
@@ -102,10 +105,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const roleError = await requireRole(request, ['ADMIN', 'EDITOR'])
+    if (roleError) return roleError
     const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
 
     const { id } = await params
     // Check if content exists

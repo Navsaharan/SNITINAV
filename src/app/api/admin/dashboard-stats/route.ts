@@ -1,11 +1,13 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { requireRole } from '@/lib/security'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const roleError = await requireRole(request, ['ADMIN', 'EDITOR'])
+  if (roleError) return roleError
   const session = await getServerSession(authOptions)
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   try {
     const [pageCount, contentCount, mediaCount, viewCount] = await Promise.all([
       prisma.page.count(), prisma.content.count(), prisma.media.count(), prisma.pageView.count(),

@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { recordSessionAudit } from '@/lib/admin-audit'
+import { requireRole } from '@/lib/security'
 
 
 const updateSettingsSchema = z.object({
@@ -15,12 +16,11 @@ const updateSettingsSchema = z.object({
 })
 
 // GET /api/settings - Get all settings
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const roleError = await requireRole(request, ['ADMIN', 'EDITOR'])
+    if (roleError) return roleError
     const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
 
     const settings = await prisma.setting.findMany({
       orderBy: { key: 'asc' }
@@ -45,10 +45,9 @@ export async function GET() {
 // PUT /api/settings - Update multiple settings
 export async function PUT(request: NextRequest) {
   try {
+    const roleError = await requireRole(request, ['ADMIN'])
+    if (roleError) return roleError
     const session = await getServerSession(authOptions)
-    if (!session || (session as any).user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
 
     const body = await request.json()
     const validatedData = updateSettingsSchema.parse(body)

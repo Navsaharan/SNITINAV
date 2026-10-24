@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { requireRole } from '@/lib/security'
 
 type RouteContext = {
   params: Promise<{ id: string }>
@@ -13,14 +14,9 @@ export async function PATCH(
   { params }: RouteContext
 ) {
   try {
+    const roleError = await requireRole(request, ['ADMIN', 'EDITOR'])
+    if (roleError) return roleError
     const session = await getServerSession(authOptions)
-
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
 
     const { isRead } = await request.json()
     const { id } = await params
@@ -47,14 +43,9 @@ export async function DELETE(
   { params }: RouteContext
 ) {
   try {
+    const roleError = await requireRole(request, ['ADMIN', 'EDITOR'])
+    if (roleError) return roleError
     const session = await getServerSession(authOptions)
-
-    if (!session) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
 
     const { id } = await params
 

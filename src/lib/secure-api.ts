@@ -11,6 +11,7 @@ import {
 import { 
   requireAuth, 
   requireAdmin, 
+  requireRole,
   getClientIP, 
   validateCSRFToken,
   generateCSRFToken
@@ -64,11 +65,9 @@ export function createSecureApi(
       }
 
       const allowedRoles = options.requireRoles || (options.requireRole ? [options.requireRole] : [])
-      if (allowedRoles.length > 0 && !allowedRoles.includes(String(user?.role || '').toUpperCase())) {
-        return NextResponse.json(
-          { error: `${allowedRoles.join(' or ')} access required` },
-          { status: 403 }
-        )
+      if (allowedRoles.length > 0) {
+        const roleError = await requireRole(request, allowedRoles)
+        if (roleError) return roleError
       }
 
       // Parse and sanitize request body

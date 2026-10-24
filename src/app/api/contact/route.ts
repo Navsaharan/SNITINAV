@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { requireRole } from '@/lib/security'
 import { z } from 'zod'
 
 const contactSchema = z.object({
@@ -16,10 +17,9 @@ const contactSchema = z.object({
 // GET /api/contact - Get all contact messages (admin only)
 export async function GET(request: NextRequest) {
   try {
+    const roleError = await requireRole(request, ['ADMIN', 'EDITOR'])
+    if (roleError) return roleError
     const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
 
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
