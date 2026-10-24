@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { boundedDimension, escapeXml, safeColor, DEFAULT_BG, DEFAULT_TEXT } from '@/lib/placeholder-image'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const width = parseInt(searchParams.get('width') || '400')
-  const height = parseInt(searchParams.get('height') || '300')
-  const text = searchParams.get('text') || 'Placeholder'
-  const bgColor = searchParams.get('bg') || '#f3f4f6'
-  const textColor = searchParams.get('color') || '#6b7280'
+  const width = boundedDimension(searchParams.get('width'), 400)
+  const height = boundedDimension(searchParams.get('height'), 300)
+  const text = escapeXml((searchParams.get('text') || 'Placeholder').slice(0, 200))
+  const bgColor = safeColor(searchParams.get('bg'), DEFAULT_BG)
+  const textColor = safeColor(searchParams.get('color'), DEFAULT_TEXT)
 
   const svg = `
     <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
