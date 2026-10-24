@@ -1,19 +1,23 @@
 const sqlite3 = require('sqlite3').verbose();
 const { Client } = require('pg');
+const bcrypt = require('bcryptjs');
 const path = require('path');
 
 const navjeetDbPath = path.join(__dirname, '..', 'navjeet.db');
 
 // Supabase connection string
-const SUPABASE_URL = process.env.SUPABASE_URL || 'postgresql://postgres:Navsaharan89%40@db.yemsrezmtmewkfflckxn.supabase.co:5432/postgres';
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL || 'admin@snpitc.in';
+const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD;
 
 async function setupSupabaseDatabase() {
   console.log('🚀 Setting up Supabase PostgreSQL database...');
   
-  if (SUPABASE_URL.includes('[YOUR-PASSWORD]') || SUPABASE_URL.includes('[YOUR-PROJECT-REF]')) {
-    console.log('❌ Please update the SUPABASE_URL in the script or set it as an environment variable');
-    console.log('Get your connection string from: Supabase Dashboard > Settings > Database');
-    return;
+  if (!SUPABASE_URL) {
+    throw new Error('SUPABASE_URL must be provided through the environment');
+  }
+  if (!ADMIN_PASSWORD || ADMIN_PASSWORD.length < 12) {
+    throw new Error('SEED_ADMIN_PASSWORD is required and must be at least 12 characters long');
   }
 
   const sqliteDb = new sqlite3.Database(navjeetDbPath, sqlite3.OPEN_READONLY);
@@ -277,10 +281,11 @@ async function setupSupabaseDatabase() {
     // Add admin user if no users exist
     const userCount = await pgClient.query('SELECT COUNT(*) FROM users');
     if (parseInt(userCount.rows[0].count) === 0) {
+      const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 12);
       await pgClient.query(`
         INSERT INTO users (id, email, name, password, role) 
-        VALUES ('admin-user-id', 'admin@snpitc.in', 'Admin User', '$2b$10$hash', 'ADMIN')
-      `);
+        VALUES ('admin-user-id', $1, 'Admin User', $2, 'ADMIN')
+      `, [ADMIN_EMAIL, passwordHash]);
       console.log('✅ Added default admin user');
     }
 
